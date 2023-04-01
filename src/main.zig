@@ -5,985 +5,991 @@ const File = std.fs.File;
 //pc should only have access to 16 bits
 pub fn disassemble(buf: []u8, pc: u16) u8 {
     var op = buf[pc];
+    var b1: u8 = 0;
+    var b2: u8 = 0;
+    if (pc < buf.len - 2) {
+        b1 = buf[pc + 1];
+        b2 = buf[pc + 2];
+    }
     switch (op) {
         0x00 => {
-            print("\x1b[36mNOP\n\x1b[0m", .{});
+            print("NOP\n", .{});
             return 1;
         },
         0x01 => {
-            print("\x1b[36mLXI B,D16\n\x1b[0m", .{});
+            print("LXI B, 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0x02 => {
-            print("\x1b[36mSTAX B\n\x1b[0m", .{});
+            print("STAX B\n", .{});
             return 1;
         },
         0x03 => {
-            print("\x1b[36mINX B\n\x1b[0m", .{});
+            print("INX B\n", .{});
             return 1;
         },
         0x04 => {
-            print("\x1b[36mINR B\n\x1b[0m", .{});
+            print("INR B\n", .{});
             return 1;
         },
         0x05 => {
-            print("\x1b[36mDCR B\n\x1b[0m", .{});
+            print("DCR B\n", .{});
             return 1;
         },
         0x06 => {
-            print("\x1b[36mMVI B, D8\n\x1b[0m", .{});
+            print("MVI B,  0x{x}\n", .{b1});
             return 2;
         },
         0x07 => {
-            print("\x1b[36mRLC\n\x1b[0m", .{});
+            print("RLC\n", .{});
             return 1;
         },
         0x09 => {
-            print("\x1b[36mDAD B\n\x1b[0m", .{});
+            print("DAD B\n", .{});
             return 1;
         },
         0x0a => {
-            print("\x1b[36mLDAX B\n\x1b[0m", .{});
+            print("LDAX B\n", .{});
             return 1;
         },
         0x0b => {
-            print("\x1b[36mDCX B\n\x1b[0m", .{});
+            print("DCX B\n", .{});
             return 1;
         },
         0x0c => {
-            print("\x1b[36mINR C\n\x1b[0m", .{});
+            print("INR C\n", .{});
             return 1;
         },
         0x0d => {
-            print("\x1b[36mDCR C\n\x1b[0m", .{});
+            print("DCR C\n", .{});
             return 1;
         },
         0x0e => {
-            print("\x1b[36mMVI C,D8\n\x1b[0m", .{});
+            print("MVI C, 0x{x}\n", .{b1});
             return 2;
         },
         0x0f => {
-            print("\x1b[36mRRC\n\x1b[0m", .{});
+            print("RRC\n", .{});
             return 1;
         },
         0x11 => {
-            print("\x1b[36mLXI D,D16\n\x1b[0m", .{});
+            print("LXI D, 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0x12 => {
-            print("\x1b[36mSTAX D\n\x1b[0m", .{});
+            print("STAX D\n", .{});
             return 1;
         },
         0x13 => {
-            print("\x1b[36mINX D\n\x1b[0m", .{});
+            print("INX D\n", .{});
             return 1;
         },
         0x14 => {
-            print("\x1b[36mINR D\n\x1b[0m", .{});
+            print("INR D\n", .{});
             return 1;
         },
         0x15 => {
-            print("\x1b[36mDCR D\n\x1b[0m", .{});
+            print("DCR D\n", .{});
             return 1;
         },
         0x16 => {
-            print("\x1b[36mMVI D, D8\n\x1b[0m", .{});
+            print("MVI D,  0x{x}\n", .{b1});
             return 2;
         },
         0x17 => {
-            print("\x1b[36mRAL\n\x1b[0m", .{});
+            print("RAL\n", .{});
             return 1;
         },
         0x19 => {
-            print("\x1b[36mDAD D\n\x1b[0m", .{});
+            print("DAD D\n", .{});
             return 1;
         },
         0x1a => {
-            print("\x1b[36mLDAX D\n\x1b[0m", .{});
+            print("LDAX D\n", .{});
             return 1;
         },
         0x1b => {
-            print("\x1b[36mDCX D\n\x1b[0m", .{});
+            print("DCX D\n", .{});
             return 1;
         },
         0x1c => {
-            print("\x1b[36mINR E\n\x1b[0m", .{});
+            print("INR E\n", .{});
             return 1;
         },
         0x1d => {
-            print("\x1b[36mDCR E\n\x1b[0m", .{});
+            print("DCR E\n", .{});
             return 1;
         },
         0x1e => {
-            print("\x1b[36mMVI E,D8\n\x1b[0m", .{});
+            print("MVI E, 0x{x}\n", .{b1});
             return 2;
         },
         0x1f => {
-            print("\x1b[36mRAR\n\x1b[0m", .{});
+            print("RAR\n", .{});
             return 1;
         },
         0x21 => {
-            print("\x1b[36mLXI H,D16\n\x1b[0m", .{});
+            print("LXI H, 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0x22 => {
-            print("\x1b[36mSHLD addr\n\x1b[0m", .{});
+            print("SHLD 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0x23 => {
-            print("\x1b[36mINX H\n\x1b[0m", .{});
+            print("INX H\n", .{});
             return 1;
         },
         0x24 => {
-            print("\x1b[36mINR H\n\x1b[0m", .{});
+            print("INR H\n", .{});
             return 1;
         },
         0x25 => {
-            print("\x1b[36mDCR H\n\x1b[0m", .{});
+            print("DCR H\n", .{});
             return 1;
         },
         0x26 => {
-            print("\x1b[36mMVI H,D8\n\x1b[0m", .{});
+            print("MVI H, 0x{x}\n", .{b1});
             return 2;
         },
         0x27 => {
-            print("\x1b[36mDAA\n\x1b[0m", .{});
+            print("DAA\n", .{});
             return 1;
         },
         0x29 => {
-            print("\x1b[36mDAD H\n\x1b[0m", .{});
+            print("DAD H\n", .{});
             return 1;
         },
         0x2a => {
-            print("\x1b[36mLHLD addr\n\x1b[0m", .{});
+            print("LHLD 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0x2b => {
-            print("\x1b[36mDCX H\n\x1b[0m", .{});
+            print("DCX H\n", .{});
             return 1;
         },
         0x2c => {
-            print("\x1b[36mINR L\n\x1b[0m", .{});
+            print("INR L\n", .{});
             return 1;
         },
         0x2d => {
-            print("\x1b[36mDCR L\n\x1b[0m", .{});
+            print("DCR L\n", .{});
             return 1;
         },
         0x2e => {
-            print("\x1b[36mMVI L, D8\n\x1b[0m", .{});
+            print("MVI L,  0x{x}\n", .{b1});
             return 2;
         },
         0x2f => {
-            print("\x1b[36mCMA\n\x1b[0m", .{});
+            print("CMA\n", .{});
             return 1;
         },
         0x31 => {
-            print("\x1b[36mLXI SP, D16\n\x1b[0m", .{});
+            print("LXI SP,  0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0x32 => {
-            print("\x1b[36mSTA addr\n\x1b[0m", .{});
+            print("STA 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0x33 => {
-            print("\x1b[36mINX SP\n\x1b[0m", .{});
+            print("INX SP\n", .{});
             return 1;
         },
         0x34 => {
-            print("\x1b[36mINR M\n\x1b[0m", .{});
+            print("INR M\n", .{});
             return 1;
         },
         0x35 => {
-            print("\x1b[36mDCR M\n\x1b[0m", .{});
+            print("DCR M\n", .{});
             return 1;
         },
         0x36 => {
-            print("\x1b[36mMVI M,D8\n\x1b[0m", .{});
+            print("MVI M, 0x{x}\n", .{b1});
             return 2;
         },
         0x37 => {
-            print("\x1b[36mSTC\n\x1b[0m", .{});
+            print("STC\n", .{});
             return 1;
         },
         0x39 => {
-            print("\x1b[36mDAD SP\n\x1b[0m", .{});
+            print("DAD SP\n", .{});
             return 1;
         },
         0x3a => {
-            print("\x1b[36mLDA addr\n\x1b[0m", .{});
+            print("LDA 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0x3b => {
-            print("\x1b[36mDCX SP\n\x1b[0m", .{});
+            print("DCX SP\n", .{});
             return 1;
         },
         0x3c => {
-            print("\x1b[36mINR A\n\x1b[0m", .{});
+            print("INR A\n", .{});
             return 1;
         },
         0x3d => {
-            print("\x1b[36mDCR A\n\x1b[0m", .{});
+            print("DCR A\n", .{});
             return 1;
         },
         0x3e => {
-            print("\x1b[36mMVI A,D8\n\x1b[0m", .{});
+            print("MVI A, 0x{x}\n", .{b1});
             return 2;
         },
         0x3f => {
-            print("\x1b[36mCMC\n\x1b[0m", .{});
+            print("CMC\n", .{});
             return 1;
         },
         0x40 => {
-            print("\x1b[36mMOV B,B\n\x1b[0m", .{});
+            print("MOV B,B\n", .{});
             return 1;
         },
         0x41 => {
-            print("\x1b[36mMOV B,C\n\x1b[0m", .{});
+            print("MOV B,C\n", .{});
             return 1;
         },
         0x42 => {
-            print("\x1b[36mMOV B,D\n\x1b[0m", .{});
+            print("MOV B,D\n", .{});
             return 1;
         },
         0x43 => {
-            print("\x1b[36mMOV B,E\n\x1b[0m", .{});
+            print("MOV B,E\n", .{});
             return 1;
         },
         0x44 => {
-            print("\x1b[36mMOV B,H\n\x1b[0m", .{});
+            print("MOV B,H\n", .{});
             return 1;
         },
         0x45 => {
-            print("\x1b[36mMOV B,L\n\x1b[0m", .{});
+            print("MOV B,L\n", .{});
             return 1;
         },
         0x46 => {
-            print("\x1b[36mMOV B,M\n\x1b[0m", .{});
+            print("MOV B,M\n", .{});
             return 1;
         },
         0x47 => {
-            print("\x1b[36mMOV B,A\n\x1b[0m", .{});
+            print("MOV B,A\n", .{});
             return 1;
         },
         0x48 => {
-            print("\x1b[36mMOV C,B\n\x1b[0m", .{});
+            print("MOV C,B\n", .{});
             return 1;
         },
         0x49 => {
-            print("\x1b[36mMOV C,C\n\x1b[0m", .{});
+            print("MOV C,C\n", .{});
             return 1;
         },
         0x4a => {
-            print("\x1b[36mMOV C,D\n\x1b[0m", .{});
+            print("MOV C,D\n", .{});
             return 1;
         },
         0x4b => {
-            print("\x1b[36mMOV C,E\n\x1b[0m", .{});
+            print("MOV C,E\n", .{});
             return 1;
         },
         0x4c => {
-            print("\x1b[36mMOV C,H\n\x1b[0m", .{});
+            print("MOV C,H\n", .{});
             return 1;
         },
         0x4d => {
-            print("\x1b[36mMOV C,L\n\x1b[0m", .{});
+            print("MOV C,L\n", .{});
             return 1;
         },
         0x4e => {
-            print("\x1b[36mMOV C,M\n\x1b[0m", .{});
+            print("MOV C,M\n", .{});
             return 1;
         },
         0x4f => {
-            print("\x1b[36mMOV C,A\n\x1b[0m", .{});
+            print("MOV C,A\n", .{});
             return 1;
         },
         0x50 => {
-            print("\x1b[36mMOV D,B\n\x1b[0m", .{});
+            print("MOV D,B\n", .{});
             return 1;
         },
         0x51 => {
-            print("\x1b[36mMOV D,C\n\x1b[0m", .{});
+            print("MOV D,C\n", .{});
             return 1;
         },
         0x52 => {
-            print("\x1b[36mMOV D,D\n\x1b[0m", .{});
+            print("MOV D,D\n", .{});
             return 1;
         },
         0x53 => {
-            print("\x1b[36mMOV D,E\n\x1b[0m", .{});
+            print("MOV D,E\n", .{});
             return 1;
         },
         0x54 => {
-            print("\x1b[36mMOV D,H\n\x1b[0m", .{});
+            print("MOV D,H\n", .{});
             return 1;
         },
         0x55 => {
-            print("\x1b[36mMOV D,L\n\x1b[0m", .{});
+            print("MOV D,L\n", .{});
             return 1;
         },
         0x56 => {
-            print("\x1b[36mMOV D,M\n\x1b[0m", .{});
+            print("MOV D,M\n", .{});
             return 1;
         },
         0x57 => {
-            print("\x1b[36mMOV D,A\n\x1b[0m", .{});
+            print("MOV D,A\n", .{});
             return 1;
         },
         0x58 => {
-            print("\x1b[36mMOV E,B\n\x1b[0m", .{});
+            print("MOV E,B\n", .{});
             return 1;
         },
         0x59 => {
-            print("\x1b[36mMOV E,C\n\x1b[0m", .{});
+            print("MOV E,C\n", .{});
             return 1;
         },
         0x5a => {
-            print("\x1b[36mMOV E,D\n\x1b[0m", .{});
+            print("MOV E,D\n", .{});
             return 1;
         },
         0x5b => {
-            print("\x1b[36mMOV E,E\n\x1b[0m", .{});
+            print("MOV E,E\n", .{});
             return 1;
         },
         0x5c => {
-            print("\x1b[36mMOV E,H\n\x1b[0m", .{});
+            print("MOV E,H\n", .{});
             return 1;
         },
         0x5d => {
-            print("\x1b[36mMOV E,L\n\x1b[0m", .{});
+            print("MOV E,L\n", .{});
             return 1;
         },
         0x5e => {
-            print("\x1b[36mMOV E,M\n\x1b[0m", .{});
+            print("MOV E,M\n", .{});
             return 1;
         },
         0x5f => {
-            print("\x1b[36mMOV E,A\n\x1b[0m", .{});
+            print("MOV E,A\n", .{});
             return 1;
         },
         0x60 => {
-            print("\x1b[36mMOV H,B\n\x1b[0m", .{});
+            print("MOV H,B\n", .{});
             return 1;
         },
         0x61 => {
-            print("\x1b[36mMOV H,C\n\x1b[0m", .{});
+            print("MOV H,C\n", .{});
             return 1;
         },
         0x62 => {
-            print("\x1b[36mMOV H,D\n\x1b[0m", .{});
+            print("MOV H,D\n", .{});
             return 1;
         },
         0x63 => {
-            print("\x1b[36mMOV H,E\n\x1b[0m", .{});
+            print("MOV H,E\n", .{});
             return 1;
         },
         0x64 => {
-            print("\x1b[36mMOV H,H\n\x1b[0m", .{});
+            print("MOV H,H\n", .{});
             return 1;
         },
         0x65 => {
-            print("\x1b[36mMOV H,L\n\x1b[0m", .{});
+            print("MOV H,L\n", .{});
             return 1;
         },
         0x66 => {
-            print("\x1b[36mMOV H,M\n\x1b[0m", .{});
+            print("MOV H,M\n", .{});
             return 1;
         },
         0x67 => {
-            print("\x1b[36mMOV H,A\n\x1b[0m", .{});
+            print("MOV H,A\n", .{});
             return 1;
         },
         0x68 => {
-            print("\x1b[36mMOV L,B\n\x1b[0m", .{});
+            print("MOV L,B\n", .{});
             return 1;
         },
         0x69 => {
-            print("\x1b[36mMOV L,C\n\x1b[0m", .{});
+            print("MOV L,C\n", .{});
             return 1;
         },
         0x6a => {
-            print("\x1b[36mMOV L,D\n\x1b[0m", .{});
+            print("MOV L,D\n", .{});
             return 1;
         },
         0x6b => {
-            print("\x1b[36mMOV L,E\n\x1b[0m", .{});
+            print("MOV L,E\n", .{});
             return 1;
         },
         0x6c => {
-            print("\x1b[36mMOV L,H\n\x1b[0m", .{});
+            print("MOV L,H\n", .{});
             return 1;
         },
         0x6d => {
-            print("\x1b[36mMOV L,L\n\x1b[0m", .{});
+            print("MOV L,L\n", .{});
             return 1;
         },
         0x6e => {
-            print("\x1b[36mMOV L,M\n\x1b[0m", .{});
+            print("MOV L,M\n", .{});
             return 1;
         },
         0x6f => {
-            print("\x1b[36mMOV L,A\n\x1b[0m", .{});
+            print("MOV L,A\n", .{});
             return 1;
         },
         0x70 => {
-            print("\x1b[36mMOV M,B\n\x1b[0m", .{});
+            print("MOV M,B\n", .{});
             return 1;
         },
         0x71 => {
-            print("\x1b[36mMOV M,C\n\x1b[0m", .{});
+            print("MOV M,C\n", .{});
             return 1;
         },
         0x72 => {
-            print("\x1b[36mMOV M,D\n\x1b[0m", .{});
+            print("MOV M,D\n", .{});
             return 1;
         },
         0x73 => {
-            print("\x1b[36mMOV M,E\n\x1b[0m", .{});
+            print("MOV M,E\n", .{});
             return 1;
         },
         0x74 => {
-            print("\x1b[36mMOV M,H\n\x1b[0m", .{});
+            print("MOV M,H\n", .{});
             return 1;
         },
         0x75 => {
-            print("\x1b[36mMOV M,L\n\x1b[0m", .{});
+            print("MOV M,L\n", .{});
             return 1;
         },
         0x76 => {
-            print("\x1b[36mHLT\n\x1b[0m", .{});
+            print("HLT\n", .{});
             return 1;
         },
         0x77 => {
-            print("\x1b[36mMOV M,A\n\x1b[0m", .{});
+            print("MOV M,A\n", .{});
             return 1;
         },
         0x78 => {
-            print("\x1b[36mMOV A,B\n\x1b[0m", .{});
+            print("MOV A,B\n", .{});
             return 1;
         },
         0x79 => {
-            print("\x1b[36mMOV A,C\n\x1b[0m", .{});
+            print("MOV A,C\n", .{});
             return 1;
         },
         0x7a => {
-            print("\x1b[36mMOV A,D\n\x1b[0m", .{});
+            print("MOV A,D\n", .{});
             return 1;
         },
         0x7b => {
-            print("\x1b[36mMOV A,E\n\x1b[0m", .{});
+            print("MOV A,E\n", .{});
             return 1;
         },
         0x7c => {
-            print("\x1b[36mMOV A,H\n\x1b[0m", .{});
+            print("MOV A,H\n", .{});
             return 1;
         },
         0x7d => {
-            print("\x1b[36mMOV A,L\n\x1b[0m", .{});
+            print("MOV A,L\n", .{});
             return 1;
         },
         0x7e => {
-            print("\x1b[36mMOV A,M\n\x1b[0m", .{});
+            print("MOV A,M\n", .{});
             return 1;
         },
         0x7f => {
-            print("\x1b[36mMOV A,A\n\x1b[0m", .{});
+            print("MOV A,A\n", .{});
             return 1;
         },
         0x80 => {
-            print("\x1b[36mADD B\n\x1b[0m", .{});
+            print("ADD B\n", .{});
             return 1;
         },
         0x81 => {
-            print("\x1b[36mADD C\n\x1b[0m", .{});
+            print("ADD C\n", .{});
             return 1;
         },
         0x82 => {
-            print("\x1b[36mADD D\n\x1b[0m", .{});
+            print("ADD D\n", .{});
             return 1;
         },
         0x83 => {
-            print("\x1b[36mADD E\n\x1b[0m", .{});
+            print("ADD E\n", .{});
             return 1;
         },
         0x84 => {
-            print("\x1b[36mADD H\n\x1b[0m", .{});
+            print("ADD H\n", .{});
             return 1;
         },
         0x85 => {
-            print("\x1b[36mADD L\n\x1b[0m", .{});
+            print("ADD L\n", .{});
             return 1;
         },
         0x86 => {
-            print("\x1b[36mADD M\n\x1b[0m", .{});
+            print("ADD M\n", .{});
             return 1;
         },
         0x87 => {
-            print("\x1b[36mADD A\n\x1b[0m", .{});
+            print("ADD A\n", .{});
             return 1;
         },
         0x88 => {
-            print("\x1b[36mADC B\n\x1b[0m", .{});
+            print("ADC B\n", .{});
             return 1;
         },
         0x89 => {
-            print("\x1b[36mADC C\n\x1b[0m", .{});
+            print("ADC C\n", .{});
             return 1;
         },
         0x8a => {
-            print("\x1b[36mADC D\n\x1b[0m", .{});
+            print("ADC D\n", .{});
             return 1;
         },
         0x8b => {
-            print("\x1b[36mADC E\n\x1b[0m", .{});
+            print("ADC E\n", .{});
             return 1;
         },
         0x8c => {
-            print("\x1b[36mADC H\n\x1b[0m", .{});
+            print("ADC H\n", .{});
             return 1;
         },
         0x8d => {
-            print("\x1b[36mADC L\n\x1b[0m", .{});
+            print("ADC L\n", .{});
             return 1;
         },
         0x8e => {
-            print("\x1b[36mADC M\n\x1b[0m", .{});
+            print("ADC M\n", .{});
             return 1;
         },
         0x8f => {
-            print("\x1b[36mADC A\n\x1b[0m", .{});
+            print("ADC A\n", .{});
             return 1;
         },
         0x90 => {
-            print("\x1b[36mSUB B\n\x1b[0m", .{});
+            print("SUB B\n", .{});
             return 1;
         },
         0x91 => {
-            print("\x1b[36mSUB C\n\x1b[0m", .{});
+            print("SUB C\n", .{});
             return 1;
         },
         0x92 => {
-            print("\x1b[36mSUB D\n\x1b[0m", .{});
+            print("SUB D\n", .{});
             return 1;
         },
         0x93 => {
-            print("\x1b[36mSUB E\n\x1b[0m", .{});
+            print("SUB E\n", .{});
             return 1;
         },
         0x94 => {
-            print("\x1b[36mSUB H\n\x1b[0m", .{});
+            print("SUB H\n", .{});
             return 1;
         },
         0x95 => {
-            print("\x1b[36mSUB L\n\x1b[0m", .{});
+            print("SUB L\n", .{});
             return 1;
         },
         0x96 => {
-            print("\x1b[36mSUB M\n\x1b[0m", .{});
+            print("SUB M\n", .{});
             return 1;
         },
         0x97 => {
-            print("\x1b[36mSUB A\n\x1b[0m", .{});
+            print("SUB A\n", .{});
             return 1;
         },
         0x98 => {
-            print("\x1b[36mSBB B\n\x1b[0m", .{});
+            print("SBB B\n", .{});
             return 1;
         },
         0x99 => {
-            print("\x1b[36mSBB C\n\x1b[0m", .{});
+            print("SBB C\n", .{});
             return 1;
         },
         0x9a => {
-            print("\x1b[36mSBB D\n\x1b[0m", .{});
+            print("SBB D\n", .{});
             return 1;
         },
         0x9b => {
-            print("\x1b[36mSBB E\n\x1b[0m", .{});
+            print("SBB E\n", .{});
             return 1;
         },
         0x9c => {
-            print("\x1b[36mSBB H\n\x1b[0m", .{});
+            print("SBB H\n", .{});
             return 1;
         },
         0x9d => {
-            print("\x1b[36mSBB L\n\x1b[0m", .{});
+            print("SBB L\n", .{});
             return 1;
         },
         0x9e => {
-            print("\x1b[36mSBB M\n\x1b[0m", .{});
+            print("SBB M\n", .{});
             return 1;
         },
         0x9f => {
-            print("\x1b[36mSBB A\n\x1b[0m", .{});
+            print("SBB A\n", .{});
             return 1;
         },
         0xa0 => {
-            print("\x1b[36mANA B\n\x1b[0m", .{});
+            print("ANA B\n", .{});
             return 1;
         },
         0xa1 => {
-            print("\x1b[36mANA C\n\x1b[0m", .{});
+            print("ANA C\n", .{});
             return 1;
         },
         0xa2 => {
-            print("\x1b[36mANA D\n\x1b[0m", .{});
+            print("ANA D\n", .{});
             return 1;
         },
         0xa3 => {
-            print("\x1b[36mANA E\n\x1b[0m", .{});
+            print("ANA E\n", .{});
             return 1;
         },
         0xa4 => {
-            print("\x1b[36mANA H\n\x1b[0m", .{});
+            print("ANA H\n", .{});
             return 1;
         },
         0xa5 => {
-            print("\x1b[36mANA L\n\x1b[0m", .{});
+            print("ANA L\n", .{});
             return 1;
         },
         0xa6 => {
-            print("\x1b[36mANA M\n\x1b[0m", .{});
+            print("ANA M\n", .{});
             return 1;
         },
         0xa7 => {
-            print("\x1b[36mANA A\n\x1b[0m", .{});
+            print("ANA A\n", .{});
             return 1;
         },
         0xa8 => {
-            print("\x1b[36mXRA B\n\x1b[0m", .{});
+            print("XRA B\n", .{});
             return 1;
         },
         0xa9 => {
-            print("\x1b[36mXRA C\n\x1b[0m", .{});
+            print("XRA C\n", .{});
             return 1;
         },
         0xaa => {
-            print("\x1b[36mXRA D\n\x1b[0m", .{});
+            print("XRA D\n", .{});
             return 1;
         },
         0xab => {
-            print("\x1b[36mXRA E\n\x1b[0m", .{});
+            print("XRA E\n", .{});
             return 1;
         },
         0xac => {
-            print("\x1b[36mXRA H\n\x1b[0m", .{});
+            print("XRA H\n", .{});
             return 1;
         },
         0xad => {
-            print("\x1b[36mXRA L\n\x1b[0m", .{});
+            print("XRA L\n", .{});
             return 1;
         },
         0xae => {
-            print("\x1b[36mXRA M\n\x1b[0m", .{});
+            print("XRA M\n", .{});
             return 1;
         },
         0xaf => {
-            print("\x1b[36mXRA A\n\x1b[0m", .{});
+            print("XRA A\n", .{});
             return 1;
         },
         0xb0 => {
-            print("\x1b[36mORA B\n\x1b[0m", .{});
+            print("ORA B\n", .{});
             return 1;
         },
         0xb1 => {
-            print("\x1b[36mORA C\n\x1b[0m", .{});
+            print("ORA C\n", .{});
             return 1;
         },
         0xb2 => {
-            print("\x1b[36mORA D\n\x1b[0m", .{});
+            print("ORA D\n", .{});
             return 1;
         },
         0xb3 => {
-            print("\x1b[36mORA E\n\x1b[0m", .{});
+            print("ORA E\n", .{});
             return 1;
         },
         0xb4 => {
-            print("\x1b[36mORA H\n\x1b[0m", .{});
+            print("ORA H\n", .{});
             return 1;
         },
         0xb5 => {
-            print("\x1b[36mORA L\n\x1b[0m", .{});
+            print("ORA L\n", .{});
             return 1;
         },
         0xb6 => {
-            print("\x1b[36mORA M\n\x1b[0m", .{});
+            print("ORA M\n", .{});
             return 1;
         },
         0xb7 => {
-            print("\x1b[36mORA A\n\x1b[0m", .{});
+            print("ORA A\n", .{});
             return 1;
         },
         0xb8 => {
-            print("\x1b[36mCMP B\n\x1b[0m", .{});
+            print("CMP B\n", .{});
             return 1;
         },
         0xb9 => {
-            print("\x1b[36mCMP C\n\x1b[0m", .{});
+            print("CMP C\n", .{});
             return 1;
         },
         0xba => {
-            print("\x1b[36mCMP D\n\x1b[0m", .{});
+            print("CMP D\n", .{});
             return 1;
         },
         0xbb => {
-            print("\x1b[36mCMP E\n\x1b[0m", .{});
+            print("CMP E\n", .{});
             return 1;
         },
         0xbc => {
-            print("\x1b[36mCMP H\n\x1b[0m", .{});
+            print("CMP H\n", .{});
             return 1;
         },
         0xbd => {
-            print("\x1b[36mCMP L\n\x1b[0m", .{});
+            print("CMP L\n", .{});
             return 1;
         },
         0xbe => {
-            print("\x1b[36mCMP M\n\x1b[0m", .{});
+            print("CMP M\n", .{});
             return 1;
         },
         0xbf => {
-            print("\x1b[36mCMP A\n\x1b[0m", .{});
+            print("CMP A\n", .{});
             return 1;
         },
         0xc0 => {
-            print("\x1b[36mRNZ\n\x1b[0m", .{});
+            print("RNZ\n", .{});
             return 1;
         },
         0xc1 => {
-            print("\x1b[36mPOP B\n\x1b[0m", .{});
+            print("POP B\n", .{});
             return 1;
         },
         0xc2 => {
-            print("\x1b[36mJNZ addr\n\x1b[0m", .{});
+            print("JNZ 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xc3 => {
-            print("\x1b[36mJMP addr\n\x1b[0m", .{});
+            print("JMP 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xc4 => {
-            print("\x1b[36mCNZ addr\n\x1b[0m", .{});
+            print("CNZ 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xc5 => {
-            print("\x1b[36mPUSH B\n\x1b[0m", .{});
+            print("PUSH B\n", .{});
             return 1;
         },
         0xc6 => {
-            print("\x1b[36mADI D8\n\x1b[0m", .{});
+            print("ADI  0x{x}\n", .{b1});
             return 2;
         },
         0xc7 => {
-            print("\x1b[36mRST 0\n\x1b[0m", .{});
+            print("RST 0\n", .{});
             return 1;
         },
         0xc8 => {
-            print("\x1b[36mRZ\n\x1b[0m", .{});
+            print("RZ\n", .{});
             return 1;
         },
         0xc9 => {
-            print("\x1b[36mRET\n\x1b[0m", .{});
+            print("RET\n", .{});
             return 1;
         },
         0xca => {
-            print("\x1b[36mJZ addr\n\x1b[0m", .{});
+            print("JZ 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xcc => {
-            print("\x1b[36mCZ addr\n\x1b[0m", .{});
+            print("CZ 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xcd => {
-            print("\x1b[36mCALL addr\n\x1b[0m", .{});
+            print("CALL 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xce => {
-            print("\x1b[36mACI D8\n\x1b[0m", .{});
+            print("ACI  0x{x}\n", .{b1});
             return 2;
         },
         0xcf => {
-            print("\x1b[36mRST 1\n\x1b[0m", .{});
+            print("RST 1\n", .{});
             return 1;
         },
         0xd0 => {
-            print("\x1b[36mRNC\n\x1b[0m", .{});
+            print("RNC\n", .{});
             return 1;
         },
         0xd1 => {
-            print("\x1b[36mPOP D\n\x1b[0m", .{});
+            print("POP D\n", .{});
             return 1;
         },
         0xd2 => {
-            print("\x1b[36mJNC addr\n\x1b[0m", .{});
+            print("JNC 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xd3 => {
-            print("\x1b[36mOUT D8\n\x1b[0m", .{});
+            print("OUT  0x{x}\n", .{b1});
             return 2;
         },
         0xd4 => {
-            print("\x1b[36mCNC addr\n\x1b[0m", .{});
+            print("CNC 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xd5 => {
-            print("\x1b[36mPUSH D\n\x1b[0m", .{});
+            print("PUSH D\n", .{});
             return 1;
         },
         0xd6 => {
-            print("\x1b[36mSUI D8\n\x1b[0m", .{});
+            print("SUI  0x{x}\n", .{b1});
             return 2;
         },
         0xd7 => {
-            print("\x1b[36mRST 2\n\x1b[0m", .{});
+            print("RST 2\n", .{});
             return 1;
         },
         0xd8 => {
-            print("\x1b[36mRC\n\x1b[0m", .{});
+            print("RC\n", .{});
             return 1;
         },
         0xda => {
-            print("\x1b[36mJC addr\n\x1b[0m", .{});
+            print("JC 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xdb => {
-            print("\x1b[36mIN D8\n\x1b[0m", .{});
+            print("IN  0x{x}\n", .{b1});
             return 2;
         },
         0xdc => {
-            print("\x1b[36mCC addr\n\x1b[0m", .{});
+            print("CC 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xde => {
-            print("\x1b[36mSBI D8\n\x1b[0m", .{});
+            print("SBI  0x{x}\n", .{b1});
             return 2;
         },
         0xdf => {
-            print("\x1b[36mRST 3\n\x1b[0m", .{});
+            print("RST 3\n", .{});
             return 1;
         },
         0xe0 => {
-            print("\x1b[36mRPO\n\x1b[0m", .{});
+            print("RPO\n", .{});
             return 1;
         },
         0xe1 => {
-            print("\x1b[36mPOP H\n\x1b[0m", .{});
+            print("POP H\n", .{});
             return 1;
         },
         0xe2 => {
-            print("\x1b[36mJPO addr\n\x1b[0m", .{});
+            print("JPO 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xe3 => {
-            print("\x1b[36mXTHL\n\x1b[0m", .{});
+            print("XTHL\n", .{});
             return 1;
         },
         0xe4 => {
-            print("\x1b[36mCPO addr\n\x1b[0m", .{});
+            print("CPO 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xe5 => {
-            print("\x1b[36mPUSH H\n\x1b[0m", .{});
+            print("PUSH H\n", .{});
             return 1;
         },
         0xe6 => {
-            print("\x1b[36mANI D8\n\x1b[0m", .{});
+            print("ANI  0x{x}\n", .{b1});
             return 2;
         },
         0xe7 => {
-            print("\x1b[36mRST 4\n\x1b[0m", .{});
+            print("RST 4\n", .{});
             return 1;
         },
         0xe8 => {
-            print("\x1b[36mRPE\n\x1b[0m", .{});
+            print("RPE\n", .{});
             return 1;
         },
         0xe9 => {
-            print("\x1b[36mPCHL\n\x1b[0m", .{});
+            print("PCHL\n", .{});
             return 1;
         },
         0xea => {
-            print("\x1b[36mJPE addr\n\x1b[0m", .{});
+            print("JPE 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xeb => {
-            print("\x1b[36mXCHG\n\x1b[0m", .{});
+            print("XCHG\n", .{});
             return 1;
         },
         0xec => {
-            print("\x1b[36mCPE addr\n\x1b[0m", .{});
+            print("CPE 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xee => {
-            print("\x1b[36mXRI D8\n\x1b[0m", .{});
+            print("XRI  0x{x}\n", .{b1});
             return 2;
         },
         0xef => {
-            print("\x1b[36mRST 5\n\x1b[0m", .{});
+            print("RST 5\n", .{});
             return 1;
         },
         0xf0 => {
-            print("\x1b[36mRP\n\x1b[0m", .{});
+            print("RP\n", .{});
             return 1;
         },
         0xf1 => {
-            print("\x1b[36mPOP PSW\n\x1b[0m", .{});
+            print("POP PSW\n", .{});
             return 1;
         },
         0xf2 => {
-            print("\x1b[36mJP addr\n\x1b[0m", .{});
+            print("JP 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xf3 => {
-            print("\x1b[36mDI\n\x1b[0m", .{});
+            print("DI\n", .{});
             return 1;
         },
         0xf4 => {
-            print("\x1b[36mCP addr\n\x1b[0m", .{});
+            print("CP 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xf5 => {
-            print("\x1b[36mPUSH PSW\n\x1b[0m", .{});
+            print("PUSH PSW\n", .{});
             return 1;
         },
         0xf6 => {
-            print("\x1b[36mORI D8\n\x1b[0m", .{});
+            print("ORI  0x{x}\n", .{b1});
             return 2;
         },
         0xf7 => {
-            print("\x1b[36mRST 6\n\x1b[0m", .{});
+            print("RST 6\n", .{});
             return 1;
         },
         0xf8 => {
-            print("\x1b[36mRM\n\x1b[0m", .{});
+            print("RM\n", .{});
             return 1;
         },
         0xf9 => {
-            print("\x1b[36mSPHL\n\x1b[0m", .{});
+            print("SPHL\n", .{});
             return 1;
         },
         0xfa => {
-            print("\x1b[36mJM addr\n\x1b[0m", .{});
+            print("JM 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xfb => {
-            print("\x1b[36mEI\n\x1b[0m", .{});
+            print("EI\n", .{});
             return 1;
         },
         0xfc => {
-            print("\x1b[36mCM addr\n\x1b[0m", .{});
+            print("CM 0x{x}{x}\n", .{ b2, b1 });
             return 3;
         },
         0xfe => {
-            print("\x1b[36mCPI D8\n\x1b[0m", .{});
+            print("CPI  0x{x}\n", .{b1});
             return 2;
         },
         0xff => {
-            print("\x1b[36mRST 7\n\x1b[0m", .{});
+            print("RST 7\n", .{});
             return 1;
         },
         0xfd, 0xed, 0x08, 0x10, 0xdd, 0xd9, 0xcb, 0x38, 0x30, 0x28, 0x20, 0x18 => {
-            print("\x1b[36mINVALID OPCODE\n\x1b[0m", .{});
+            print("INVALID OPCODE\n", .{});
             return 0;
         },
     }

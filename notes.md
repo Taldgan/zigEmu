@@ -256,3 +256,14 @@ Opcode    Instruction    size    flags             function
 0xfd |-|||
 0xfe |CPI D8|2|Z, S, P, CY, AC|A - data
 0xff     RST 7    1        CALL $38
+
+# Memory Map Info
+According to emulator101.com:
+- Space Invaders rom is loaded at address 0
+- 8080 then has 8K of memory loaded at 0x2000
+- Video buffer starts at 0x2400
+- invaders h, g, f, e are mapped as follows:
+- 0000 to 07ff = invaders.h
+- 0800 to 0fff = invaders.g
+- 1000 to 17ff = invaders.f
+- 1800 to 1fff = invaders.e
