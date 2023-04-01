@@ -2,7 +2,8 @@ const std = @import("std");
 const print = std.debug.print;
 const File = std.fs.File;
 
-pub fn disassemble(buf: []u8, pc: u32) u8 {
+//pc should only have access to 16 bits
+pub fn disassemble(buf: []u8, pc: u16) u8 {
     var op = buf[pc];
     switch (op) {
         0x00 => {
@@ -1019,7 +1020,7 @@ pub fn main() !void {
         //once deinit() is called
         defer arena.deinit();
         var emuBuf = try readEmuFile(name, alloc);
-        var i: u32 = 0;
+        var i: u16 = 0;
         while (i <= emuBuf.len - 1) {
             print("0x{x}: ", .{i});
             var opSize = disassemble(emuBuf, i);
