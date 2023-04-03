@@ -546,7 +546,6 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.cy = @boolToInt(result > 0xff);
             cpu.a = result;
             cpu.pc += 1;
-            unimplementedOpcode(op[0], cpu);
         },
         0x3e => {
             //MVI A, D8 (A = D8)
@@ -1793,7 +1792,11 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xc5 => {
-            unimplementedOpcode(op[0], cpu);
+            //PUSH B ((SP-1) = B, (SP-2) = C, SP -= 2)
+            cpu.memory[cpu.sp - 1] = cpu.b;
+            cpu.memory[cpu.sp - 2] = cpu.c;
+            cpu.sp -= 2;
+            cpu.pc += 1;
         },
         0xc6 => {
             unimplementedOpcode(op[0], cpu);
@@ -1924,7 +1927,11 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xd5 => {
-            unimplementedOpcode(op[0], cpu);
+            //PUSH D ((SP-1) = D, (SP-2) = E, SP -= 2)
+            cpu.memory[cpu.sp - 1] = cpu.d;
+            cpu.memory[cpu.sp - 2] = cpu.e;
+            cpu.sp -= 2;
+            cpu.pc += 1;
         },
         0xd6 => {
             unimplementedOpcode(op[0], cpu);
@@ -2044,7 +2051,11 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xe5 => {
-            unimplementedOpcode(op[0], cpu);
+            //PUSH H ((SP-1) = H, (SP-2) = L, SP -= 2)
+            cpu.memory[cpu.sp - 1] = cpu.h;
+            cpu.memory[cpu.sp - 2] = cpu.l;
+            cpu.sp -= 2;
+            cpu.pc += 1;
         },
         0xe6 => {
             //ANI D8 (A = A & D8)
@@ -2173,7 +2184,18 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xf5 => {
-            unimplementedOpcode(op[0], cpu);
+            //PUSH PSW ((SP-2) = FLAGS, (SP-1) = A, SP -= 2)
+            var flags: u8 = 0;
+            flags = flags | cpu.ac << 4;
+            flags = flags | cpu.cy << 3;
+            flags = flags | cpu.p << 2;
+            flags = flags | cpu.s << 1;
+            flags = flags | cpu.z;
+
+            cpu.memory[cpu.sp - 2] = flags;
+            cpu.memory[cpu.sp - 1] = cpu.a;
+            cpu.sp -= 2;
+            cpu.pc += 1;
         },
         0xf6 => {
             unimplementedOpcode(op[0], cpu);
