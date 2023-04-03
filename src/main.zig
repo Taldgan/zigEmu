@@ -38,9 +38,9 @@ pub fn printCpuStatus(pCpu: *CPU) void {
     var cpu = pCpu.*;
     print(" a: 0x{x:0>2} b: 0x{x:0>2} c: 0x{x:0>2}", .{ cpu.a, cpu.b, cpu.c });
     print(" d: 0x{x:0>2}\n e: 0x{x:0>2} h: 0x{x:0>2} l: 0x{x:0>2}\n", .{ cpu.d, cpu.e, cpu.h, cpu.l });
-    print(" pc: 0x{x:0>2} -> [", .{cpu.pc});
+    print(" pc: 0x{x:0>4} -> [", .{cpu.pc});
     _ = disassemble(cpu.memory, cpu.pc);
-    print("]\n sp: 0x{x:0>2} -> [0x{x:0>2}{x:0>2}]\n", .{ cpu.sp, cpu.memory[cpu.sp + 1], cpu.memory[cpu.sp] });
+    print("]\n sp: 0x{x:0>4} -> [0x{x:0>2}{x:0>2}]\n", .{ cpu.sp, cpu.memory[cpu.sp + 1], cpu.memory[cpu.sp] });
     print(" z:{b} s:{b} p:{b} cy:{b} ac:{b}", .{ cpu.cc.z, cpu.cc.s, cpu.cc.p, cpu.cc.cy, cpu.cc.ac });
     print("\n\n", .{});
 }
@@ -1942,6 +1942,7 @@ pub fn emulate(cpu: *CPU) void {
 pub fn unimplementedOpcode(op: u8, cpu: *CPU) void {
     print("Unimplemented Opcode 0x{x:0>2}\n", .{op});
     _ = disassemble(cpu.memory, cpu.pc);
+    print("\n", .{});
     std.os.exit(1);
 }
 
@@ -3000,7 +3001,7 @@ pub fn main() !void {
     //to have a non-null value ([]u8)
     const file_name = arg_it.next();
     if (file_name) |name| {
-        print("Want to open {s}, but zig hates me.\n", .{name});
+        print("Opening file {s} for emulation\n", .{name});
         //Create arena allocator 'arena'
         var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
         const alloc = arena.allocator();
@@ -3011,7 +3012,7 @@ pub fn main() !void {
         defer arena.deinit();
         var mem = try readEmuFile(name, alloc);
 
-        disassembleWholeProg(mem);
+        //disassembleWholeProg(mem);
         var cpu = try initCpu(mem, alloc);
         while (true) {
             emulate(cpu);
