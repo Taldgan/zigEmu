@@ -74,7 +74,13 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0x07 => {
-            unimplementedOpcode();
+            //RLC (A = (A << 1) | ((A & 0x80) >> 7) )
+            var op1: u8 = cpu.a;
+            var op2: u8 = (op1 & 0x80) >> 7;
+            var result: u8 = (op1 << 1) | op2;
+            cpu.a = result;
+            cpu.cc.cy = @boolToInt(op2 == 1);
+            cpu.pc += 1;
         },
         0x09 => {
             unimplementedOpcode();
@@ -95,7 +101,12 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0x0f => {
-            unimplementedOpcode();
+            //RRC (A = (A & 1 << 7) | (A >> 1) )
+            var op1: u8 = cpu.a;
+            var result: u8 = (op1 & 1 << 7) | (op1 >> 1);
+            cpu.a = result;
+            cpu.cc.cy = @boolToInt((op1 & 1) == 1);
+            cpu.pc += 1;
         },
         0x11 => {
             unimplementedOpcode();
@@ -116,7 +127,14 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0x17 => {
-            unimplementedOpcode();
+            //RLC (A = (A << 1) | CY)
+            var op1: u8 = cpu.a;
+            var op2: u8 = @as(u8, cpu.cc.cy);
+            var bit7: u8 = (op1 & 0x80) >> 7;
+            var result: u8 = (op1 << 1) | op2;
+            cpu.a = result;
+            cpu.cc.cy = @boolToInt(bit7 == 1);
+            cpu.pc += 1;
         },
         0x19 => {
             unimplementedOpcode();
@@ -137,7 +155,13 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0x1f => {
-            unimplementedOpcode();
+            //RAR (A = (CY << 7) | (A >> 1) )
+            var op1: u8 = cpu.a;
+            var op2: u8 = @as(u8, cpu.cc.cy);
+            var result: u8 = (op2 << 7) | (op1 >> 1);
+            cpu.a = result;
+            cpu.cc.cy = @boolToInt((op1 & 1) == 1);
+            cpu.pc += 1;
         },
         0x21 => {
             unimplementedOpcode();
@@ -202,7 +226,7 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0x37 => {
-            unimplementedOpcode();
+            cpu.cc.cy = 1;
         },
         0x39 => {
             unimplementedOpcode();
@@ -223,7 +247,7 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0x3f => {
-            unimplementedOpcode();
+            cpu.cc.cy = ~cpu.cc.cy;
         },
         0x40 => {
             unimplementedOpcode();
