@@ -87,7 +87,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.b = result;
+            cpu.b = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x05 => {
@@ -97,7 +97,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.b = result;
+            cpu.b = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x06 => {
@@ -157,7 +157,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.c = result;
+            cpu.c = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x0d => {
@@ -167,7 +167,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.c = result;
+            cpu.c = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x0e => {
@@ -217,7 +217,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.d = result;
+            cpu.d = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x15 => {
@@ -227,7 +227,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.d = result;
+            cpu.d = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x16 => {
@@ -288,7 +288,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.e = result;
+            cpu.e = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x1d => {
@@ -298,7 +298,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.e = result;
+            cpu.e = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x1e => {
@@ -354,7 +354,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.h = result;
+            cpu.h = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x25 => {
@@ -364,7 +364,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.h = result;
+            cpu.h = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x26 => {
@@ -414,7 +414,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.l = result;
+            cpu.l = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x2d => {
@@ -424,7 +424,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.l = result;
+            cpu.l = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x2e => {
@@ -466,7 +466,7 @@ pub fn emulate(cpu: *CPU) void {
 
             var result: u16 = cpu.memory[hl];
             result += 1;
-            cpu.memory[hl] = result;
+            cpu.memory[hl] = @truncate(u8, result);
 
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
@@ -481,7 +481,7 @@ pub fn emulate(cpu: *CPU) void {
 
             var result: u16 = cpu.memory[hl];
             result -= 1;
-            cpu.memory[hl] = result;
+            cpu.memory[hl] = @truncate(u8, result);
 
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
@@ -534,7 +534,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.a = result;
+            cpu.a = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x3d => {
@@ -544,7 +544,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
-            cpu.a = result;
+            cpu.a = @truncate(u8, result);
             cpu.pc += 1;
         },
         0x3e => {
@@ -2186,11 +2186,11 @@ pub fn emulate(cpu: *CPU) void {
         0xf5 => {
             //PUSH PSW ((SP-2) = FLAGS, (SP-1) = A, SP -= 2)
             var flags: u8 = 0;
-            flags = flags | cpu.ac << 4;
-            flags = flags | cpu.cy << 3;
-            flags = flags | cpu.p << 2;
-            flags = flags | cpu.s << 1;
-            flags = flags | cpu.z;
+            flags = (flags | cpu.cc.ac) << 4;
+            flags = (flags | cpu.cc.cy) << 3;
+            flags = (flags | cpu.cc.p) << 2;
+            flags = (flags | cpu.cc.s) << 1;
+            flags = flags | cpu.cc.z;
 
             cpu.memory[cpu.sp - 2] = flags;
             cpu.memory[cpu.sp - 1] = cpu.a;
@@ -2198,7 +2198,9 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0xf6 => {
-            unimplementedOpcode(op[0], cpu);
+            //ORI D8 (A = A | D8)
+            cpu.a = cpu.a | op[1];
+            cpu.pc += 2;
         },
         0xf7 => {
             unimplementedOpcode(op[0], cpu);
