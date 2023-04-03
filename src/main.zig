@@ -1270,7 +1270,10 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xc1 => {
-            unimplementedOpcode();
+            //POP B (C = (SP), B = (SP +1), SP += 2)
+            cpu.c = cpu.memory[cpu.sp];
+            cpu.b = cpu.memory[cpu.sp + 1];
+            cpu.sp += 2;
         },
         0xc2 => {
             //JNZ addr
@@ -1401,7 +1404,10 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xd1 => {
-            unimplementedOpcode();
+            //POP D (E = (SP), D = (SP +1), SP += 2)
+            cpu.e = cpu.memory[cpu.sp];
+            cpu.d = cpu.memory[cpu.sp + 1];
+            cpu.sp += 2;
         },
         0xd2 => {
             //JNC addr
@@ -1507,7 +1513,10 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xe1 => {
-            unimplementedOpcode();
+            //POP H (L = (SP), H = (SP +1), SP += 2)
+            cpu.l = cpu.memory[cpu.sp];
+            cpu.h = cpu.memory[cpu.sp + 1];
+            cpu.sp += 2;
         },
         0xe2 => {
             //JPO addr
@@ -1522,7 +1531,16 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xe3 => {
-            unimplementedOpcode();
+            //XTHL
+            var h: u8 = cpu.h;
+            var l: u8 = cpu.l;
+            var sp1: u8 = cpu.memory[cpu.sp];
+            var sp2: u8 = cpu.memory[cpu.sp + 1];
+
+            cpu.h = sp2;
+            cpu.l = sp1;
+            cpu.memory[cpu.sp] = l;
+            cpu.memory[cpu.sp + 1] = h;
         },
         0xe4 => {
             //CPO addr
@@ -1626,7 +1644,16 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xf1 => {
-            unimplementedOpcode();
+            //POP PSW (FLAGS = (SP), A = (SP +1), SP += 2)
+            var flags: u8 = cpu.memory[cpu.sp];
+            cpu.cc.z = @boolToInt((flags & 1) == 1);
+            cpu.cc.s = @boolToInt((flags & 2) == 2);
+            cpu.cc.p = @boolToInt((flags & 4) == 4);
+            cpu.cc.cy = @boolToInt((flags & 8) == 8);
+            cpu.cc.ac = @boolToInt((flags & 16) == 16);
+
+            cpu.a = cpu.memory[cpu.sp + 1];
+            cpu.sp += 2;
         },
         0xf2 => {
             //JP addr
@@ -1682,7 +1709,11 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xf9 => {
-            unimplementedOpcode();
+            //SPHL (SP = HL)
+            var new_sp: u16 = cpu.h;
+            new_sp = new_sp << 8;
+            new_sp += cpu.l;
+            cpu.sp = new_sp;
         },
         0xfa => {
             //JM addr
@@ -2799,8 +2830,10 @@ pub fn main() !void {
         disassembleWholeProg(mem);
         var cpu = try initCpu(mem, alloc);
         //For instruction testing, at the moment
-        cpu.pc = 0x1a87;
+        cpu.pc = 0x26c;
         cpu.sp = 0x1fef;
+        cpu.h = 0xab;
+        cpu.l = 0xcd;
         printCpuStatus(cpu);
         emulate(cpu);
         printCpuStatus(cpu);
