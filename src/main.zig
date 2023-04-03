@@ -41,7 +41,7 @@ pub fn printCpuStatus(pCpu: *CPU) void {
     print(" pc: 0x{x:0>2} -> [", .{cpu.pc});
     _ = disassemble(cpu.memory, cpu.pc);
     print("]\n sp: 0x{x:0>2} -> [0x{x:0>2}{x:0>2}]\n", .{ cpu.sp, cpu.memory[cpu.sp + 1], cpu.memory[cpu.sp] });
-    print(" z:{b} s:{b} p:{b} cy:{b} ac:{b} pad:{b}", .{ cpu.cc.z, cpu.cc.s, cpu.cc.p, cpu.cc.cy, cpu.cc.ac, cpu.cc.pad });
+    print(" z:{b} s:{b} p:{b} cy:{b} ac:{b}", .{ cpu.cc.z, cpu.cc.s, cpu.cc.p, cpu.cc.cy, cpu.cc.ac });
     print("\n\n", .{});
 }
 
@@ -179,7 +179,9 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0x2f => {
-            unimplementedOpcode();
+            //CMA (A = !A)
+            cpu.a = ~cpu.a;
+            cpu.pc += 1;
         },
         0x31 => {
             unimplementedOpcode();
@@ -898,7 +900,7 @@ pub fn emulate(cpu: *CPU) void {
         0xa5 => {
             //ANA L (A = A & L)
             var op1: u16 = cpu.a;
-            var op2: u16 = cpu.h;
+            var op2: u16 = cpu.l;
             var result: u16 = op1 & op2;
             cpu.a = @truncate(u8, result);
             cpu.cc.z = @boolToInt(result == 0);
@@ -999,7 +1001,7 @@ pub fn emulate(cpu: *CPU) void {
         0xad => {
             //XRA L (A = A ^ L)
             var op1: u16 = cpu.a;
-            var op2: u16 = cpu.h;
+            var op2: u16 = cpu.l;
             var result: u16 = op1 ^ op2;
             cpu.a = @truncate(u8, result);
             cpu.cc.z = @boolToInt(result == 0);
@@ -1099,7 +1101,7 @@ pub fn emulate(cpu: *CPU) void {
         0xb5 => {
             //ORA L (A = A | L)
             var op1: u16 = cpu.a;
-            var op2: u16 = cpu.h;
+            var op2: u16 = cpu.l;
             var result: u16 = op1 | op2;
             cpu.a = @truncate(u8, result);
             cpu.cc.z = @boolToInt(result == 0);
@@ -1136,30 +1138,112 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.p = parity(result);
             cpu.pc += 1;
         },
-        0xb8 => {},
+        0xb8 => {
+            //CMP B (FLAGS = A - B)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.a;
+            var result: u16 = op1 - op2;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
+        },
         0xb9 => {
-            unimplementedOpcode();
+            //CMP C (FLAGS = A - C)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.b;
+            var result: u16 = op1 - op2;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xba => {
-            unimplementedOpcode();
+            //CMP D (FLAGS = A - D)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.c;
+            var result: u16 = op1 - op2;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xbb => {
-            unimplementedOpcode();
+            //CMP E (FLAGS = A - E)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.d;
+            var result: u16 = op1 - op2;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xbc => {
-            unimplementedOpcode();
+            //CMP H (FLAGS = A - H)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.h;
+            var result: u16 = op1 - op2;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xbd => {
-            unimplementedOpcode();
+            //CMP L (FLAGS = A - L)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.l;
+            var result: u16 = op1 - op2;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xbe => {
-            unimplementedOpcode();
+            //CMP M (FLAGS = A - (HL))
+            //Dereference loc of HL, add that val
+            var op1: u16 = cpu.a;
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            var op2: u16 = cpu.memory[hl];
+            var result: u16 = op1 - op2;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xbf => {
-            unimplementedOpcode();
+            //CMP A (FLAGS = A - A)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.a;
+            var result: u16 = op1 - op2;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xc0 => {
-            unimplementedOpcode();
+            //RNZ
+            if (cpu.cc.z == 0) {
+                var jmp_to: u16 = cpu.memory[cpu.sp + 1];
+                jmp_to = jmp_to << 8;
+                jmp_to += cpu.memory[cpu.sp];
+
+                //Increment SP, jump
+                cpu.sp += 2;
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 1;
+            }
         },
         0xc1 => {
             unimplementedOpcode();
@@ -1184,7 +1268,19 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc = jmp_to;
         },
         0xc4 => {
-            unimplementedOpcode();
+            //CNZ addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+            cpu.pc += 3;
+            if (cpu.cc.z == 0) {
+                //Write ret addr
+                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                //Decrement SP, jump
+                cpu.sp -= 2;
+                cpu.pc = jmp_to;
+            }
         },
         0xc5 => {
             unimplementedOpcode();
@@ -1196,10 +1292,28 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xc8 => {
-            unimplementedOpcode();
+            //RZ
+            if (cpu.cc.z == 1) {
+                var jmp_to: u16 = cpu.memory[cpu.sp + 1];
+                jmp_to = jmp_to << 8;
+                jmp_to += cpu.memory[cpu.sp];
+
+                //Increment SP, jump
+                cpu.sp += 2;
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 1;
+            }
         },
         0xc9 => {
-            unimplementedOpcode();
+            //RET
+            var jmp_to: u16 = cpu.memory[cpu.sp + 1];
+            jmp_to = jmp_to << 8;
+            jmp_to += cpu.memory[cpu.sp];
+
+            //Increment SP, jump
+            cpu.sp += 2;
+            cpu.pc = jmp_to;
         },
         0xca => {
             //JZ addr
@@ -1214,10 +1328,33 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xcc => {
-            unimplementedOpcode();
+            //CZ addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+            cpu.pc += 3;
+            if (cpu.cc.z == 1) {
+                //Write ret addr
+                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                //Decrement SP, jump
+                cpu.sp -= 2;
+                cpu.pc = jmp_to;
+            }
         },
         0xcd => {
-            unimplementedOpcode();
+            //CALL addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+
+            //Write ret addr
+            cpu.pc += 3;
+            cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
+            cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+            //Decrement SP, jump
+            cpu.sp -= 2;
+            cpu.pc = jmp_to;
         },
         0xce => {
             unimplementedOpcode();
@@ -1226,7 +1363,18 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xd0 => {
-            unimplementedOpcode();
+            //RNC
+            if (cpu.cc.cy == 0) {
+                var jmp_to: u16 = cpu.memory[cpu.sp + 1];
+                jmp_to = jmp_to << 8;
+                jmp_to += cpu.memory[cpu.sp];
+
+                //Increment SP, jump
+                cpu.sp += 2;
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 1;
+            }
         },
         0xd1 => {
             unimplementedOpcode();
@@ -1247,7 +1395,19 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xd4 => {
-            unimplementedOpcode();
+            //CNC addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+            cpu.pc += 3;
+            if (cpu.cc.cy == 0) {
+                //Write ret addr
+                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                //Decrement SP, jump
+                cpu.sp -= 2;
+                cpu.pc = jmp_to;
+            }
         },
         0xd5 => {
             unimplementedOpcode();
@@ -1259,7 +1419,18 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xd8 => {
-            unimplementedOpcode();
+            //RC
+            if (cpu.cc.cy == 1) {
+                var jmp_to: u16 = cpu.memory[cpu.sp + 1];
+                jmp_to = jmp_to << 8;
+                jmp_to += cpu.memory[cpu.sp];
+
+                //Increment SP, jump
+                cpu.sp += 2;
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 1;
+            }
         },
         0xda => {
             //JC addr
@@ -1277,7 +1448,19 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xdc => {
-            unimplementedOpcode();
+            //CC addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+            cpu.pc += 3;
+            if (cpu.cc.cy == 1) {
+                //Write ret addr
+                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                //Decrement SP, jump
+                cpu.sp -= 2;
+                cpu.pc = jmp_to;
+            }
         },
         0xde => {
             unimplementedOpcode();
@@ -1286,7 +1469,18 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xe0 => {
-            unimplementedOpcode();
+            //RPO
+            if (cpu.cc.p == 0) {
+                var jmp_to: u16 = cpu.memory[cpu.sp + 1];
+                jmp_to = jmp_to << 8;
+                jmp_to += cpu.memory[cpu.sp];
+
+                //Increment SP, jump
+                cpu.sp += 2;
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 1;
+            }
         },
         0xe1 => {
             unimplementedOpcode();
@@ -1307,19 +1501,52 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xe4 => {
-            unimplementedOpcode();
+            //CPO addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+            cpu.pc += 3;
+            if (cpu.cc.p == 0) {
+                //Write ret addr
+                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                //Decrement SP, jump
+                cpu.sp -= 2;
+                cpu.pc = jmp_to;
+            }
         },
         0xe5 => {
             unimplementedOpcode();
         },
         0xe6 => {
-            unimplementedOpcode();
+            //ANI D8 (A = A & D8)
+            var op1: u16 = cpu.a;
+            var op2: u16 = op[1];
+            var result: u16 = op1 & op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            //ANI clears carry bit
+            cpu.cc.cy = 0;
+            cpu.cc.p = parity(result);
+            cpu.pc += 2;
         },
         0xe7 => {
             unimplementedOpcode();
         },
         0xe8 => {
-            unimplementedOpcode();
+            //RPE
+            if (cpu.cc.p == 1) {
+                var jmp_to: u16 = cpu.memory[cpu.sp + 1];
+                jmp_to = jmp_to << 8;
+                jmp_to += cpu.memory[cpu.sp];
+
+                //Increment SP, jump
+                cpu.sp += 2;
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 1;
+            }
         },
         0xe9 => {
             unimplementedOpcode();
@@ -1340,7 +1567,19 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xec => {
-            unimplementedOpcode();
+            //CPE addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+            cpu.pc += 3;
+            if (cpu.cc.p == 1) {
+                //Write ret addr
+                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                //Decrement SP, jump
+                cpu.sp -= 2;
+                cpu.pc = jmp_to;
+            }
         },
         0xee => {
             unimplementedOpcode();
@@ -1349,7 +1588,18 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xf0 => {
-            unimplementedOpcode();
+            //RP
+            if (cpu.cc.s == 0) {
+                var jmp_to: u16 = cpu.memory[cpu.sp + 1];
+                jmp_to = jmp_to << 8;
+                jmp_to += cpu.memory[cpu.sp];
+
+                //Increment SP, jump
+                cpu.sp += 2;
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 1;
+            }
         },
         0xf1 => {
             unimplementedOpcode();
@@ -1370,7 +1620,19 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xf4 => {
-            unimplementedOpcode();
+            //CP addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+            cpu.pc += 3;
+            if (cpu.cc.s == 0) {
+                //Write ret addr
+                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                //Decrement SP, jump
+                cpu.sp -= 2;
+                cpu.pc = jmp_to;
+            }
         },
         0xf5 => {
             unimplementedOpcode();
@@ -1382,7 +1644,18 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xf8 => {
-            unimplementedOpcode();
+            //RM
+            if (cpu.cc.s == 1) {
+                var jmp_to: u16 = cpu.memory[cpu.sp + 1];
+                jmp_to = jmp_to << 8;
+                jmp_to += cpu.memory[cpu.sp];
+
+                //Increment SP, jump
+                cpu.sp += 2;
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 1;
+            }
         },
         0xf9 => {
             unimplementedOpcode();
@@ -1403,7 +1676,19 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xfc => {
-            unimplementedOpcode();
+            //CM addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+            cpu.pc += 3;
+            if (cpu.cc.s == 1) {
+                //Write ret addr
+                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                //Decrement SP, jump
+                cpu.sp -= 2;
+                cpu.pc = jmp_to;
+            }
         },
         0xfe => {
             unimplementedOpcode();
@@ -2490,9 +2775,11 @@ pub fn main() !void {
         disassembleWholeProg(mem);
         var cpu = try initCpu(mem, alloc);
         //For instruction testing, at the moment
-        cpu.pc = 0x1a7b;
+        cpu.pc = 0x1a87;
+        cpu.sp = 0x1fef;
         printCpuStatus(cpu);
         emulate(cpu);
         printCpuStatus(cpu);
+        //0x1a87: cde619 CALL 0x19e6
     }
 }
