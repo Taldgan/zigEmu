@@ -53,25 +53,57 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x01 => {
-            //LXI B, D16
-            cpu.c = op[1];
+            //LXI B, D16 (BC = D16)
             cpu.b = op[2];
+            cpu.c = op[1];
             cpu.pc += 3;
         },
         0x02 => {
-            unimplementedOpcode(op[0], cpu);
+            //STAX B
+            var bc: u16 = cpu.b;
+            bc = bc << 8;
+            bc += cpu.c;
+
+            cpu.memory[bc] = cpu.a;
+            cpu.pc += 1;
         },
         0x03 => {
-            unimplementedOpcode(op[0], cpu);
+            //INX B (BC = BC + 1)
+            var bc: u16 = cpu.b;
+            bc = bc << 8;
+            bc += cpu.c;
+
+            bc += 1;
+
+            cpu.b = @truncate(u8, (bc >> 8));
+            cpu.c = @truncate(u8, bc);
+
+            cpu.pc += 1;
         },
         0x04 => {
-            unimplementedOpcode(op[0], cpu);
+            //INR B (B = B + 1)
+            var result: u16 = cpu.b;
+            result += 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.b = result;
+            cpu.pc += 1;
         },
         0x05 => {
-            unimplementedOpcode(op[0], cpu);
+            //DCR B (B = B - 1)
+            var result: u16 = cpu.b;
+            result -= 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.b = result;
+            cpu.pc += 1;
         },
         0x06 => {
-            unimplementedOpcode(op[0], cpu);
+            //MVI B, D8 (B = D8)
+            cpu.b = op[1];
+            cpu.pc += 2;
         },
         0x07 => {
             //RLC (A = (A << 1) | ((A & 0x80) >> 7) )
@@ -83,22 +115,65 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x09 => {
-            unimplementedOpcode(op[0], cpu);
+            //DAD B (HL = HL + BC)
+            var bc: u16 = cpu.b;
+            bc = bc << 8;
+            bc += cpu.c;
+
+            var hl: u17 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            hl += bc;
+            cpu.cc.cy = @boolToInt(((hl & 0x100) != 0));
+            cpu.h = @truncate(u8, hl >> 8);
+            cpu.l = @truncate(u8, hl);
+            cpu.pc += 1;
         },
         0x0a => {
-            unimplementedOpcode(op[0], cpu);
+            //LDAX B (A = (BC))
+            var bc: u16 = cpu.b;
+            bc = bc << 8;
+            bc += cpu.c;
+
+            cpu.a = cpu.memory[bc];
+            cpu.pc += 1;
         },
         0x0b => {
-            unimplementedOpcode(op[0], cpu);
+            //DCX B (BC = BC - 1)
+            var bc: u16 = cpu.b;
+            bc = bc << 8;
+            bc += cpu.c;
+            bc -= 1;
+
+            cpu.b = @truncate(u8, (bc >> 8));
+            cpu.c = @truncate(u8, bc);
+            cpu.pc += 1;
         },
         0x0c => {
-            unimplementedOpcode(op[0], cpu);
+            //INR C (C = C + 1)
+            var result: u16 = cpu.c;
+            result += 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.c = result;
+            cpu.pc += 1;
         },
         0x0d => {
-            unimplementedOpcode(op[0], cpu);
+            //DCR C (C = C - 1)
+            var result: u16 = cpu.c;
+            result -= 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.c = result;
+            cpu.pc += 1;
         },
         0x0e => {
-            unimplementedOpcode(op[0], cpu);
+            //MVI C, D8 (C = D8)
+            cpu.c = op[1];
+            cpu.pc += 2;
         },
         0x0f => {
             //RRC (A = (A & 1 << 7) | (A >> 1) )
@@ -109,22 +184,56 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x11 => {
-            unimplementedOpcode(op[0], cpu);
+            //LXI D, D16 (DE = D16)
+            cpu.d = op[2];
+            cpu.e = op[1];
+            cpu.pc += 3;
         },
         0x12 => {
-            unimplementedOpcode(op[0], cpu);
+            //STAX D
+            var de: u16 = cpu.d;
+            de = de << 8;
+            de += cpu.e;
+
+            cpu.memory[de] = cpu.a;
+            cpu.pc += 1;
         },
         0x13 => {
-            unimplementedOpcode(op[0], cpu);
+            //INX D (DE = DE + 1)
+            var de: u16 = cpu.d;
+            de = de << 8;
+            de += cpu.e;
+            de += 1;
+
+            cpu.d = @truncate(u8, (de >> 8));
+            cpu.e = @truncate(u8, de);
+
+            cpu.pc += 1;
         },
         0x14 => {
-            unimplementedOpcode(op[0], cpu);
+            //INR D (D = D + 1)
+            var result: u16 = cpu.d;
+            result += 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.d = result;
+            cpu.pc += 1;
         },
         0x15 => {
-            unimplementedOpcode(op[0], cpu);
+            //DCR D (D = D - 1)
+            var result: u16 = cpu.d;
+            result -= 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.d = result;
+            cpu.pc += 1;
         },
         0x16 => {
-            unimplementedOpcode(op[0], cpu);
+            //MVI D, D8 (D = D8)
+            cpu.d = op[1];
+            cpu.pc += 2;
         },
         0x17 => {
             //RAL (A = (A << 1) | CY)
@@ -137,22 +246,65 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x19 => {
-            unimplementedOpcode(op[0], cpu);
+            //DAD D (HL = HL + DE)
+            var de: u16 = cpu.d;
+            de = de << 8;
+            de += cpu.e;
+
+            var hl: u17 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            hl += de;
+            cpu.cc.cy = @boolToInt(((hl & 0x100) != 0));
+            cpu.h = @truncate(u8, hl >> 8);
+            cpu.l = @truncate(u8, hl);
+            cpu.pc += 1;
         },
         0x1a => {
-            unimplementedOpcode(op[0], cpu);
+            //LDAX D (A = (DE))
+            var de: u16 = cpu.d;
+            de = de << 8;
+            de += cpu.e;
+
+            cpu.a = cpu.memory[de];
+            cpu.pc += 1;
         },
         0x1b => {
-            unimplementedOpcode(op[0], cpu);
+            //DCX D (DE = DE - 1)
+            var de: u16 = cpu.d;
+            de = de << 8;
+            de += cpu.e;
+            de -= 1;
+
+            cpu.d = @truncate(u8, (de >> 8));
+            cpu.e = @truncate(u8, de);
+            cpu.pc += 1;
         },
         0x1c => {
-            unimplementedOpcode(op[0], cpu);
+            //INR E (E = E + 1)
+            var result: u16 = cpu.e;
+            result += 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.e = result;
+            cpu.pc += 1;
         },
         0x1d => {
-            unimplementedOpcode(op[0], cpu);
+            //DCR E (E = E - 1)
+            var result: u16 = cpu.e;
+            result -= 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.e = result;
+            cpu.pc += 1;
         },
         0x1e => {
-            unimplementedOpcode(op[0], cpu);
+            //MVI E, D8 (E = D8)
+            cpu.e = op[1];
+            cpu.pc += 2;
         },
         0x1f => {
             //RAR (A = (CY << 7) | (A >> 1) )
@@ -163,44 +315,122 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.cy = @boolToInt((op1 & 1) == 1);
             cpu.pc += 1;
         },
-        0x21 => {
+        0x20 => {
+            //RIM
             unimplementedOpcode(op[0], cpu);
+        },
+        0x21 => {
+            //LXI H, D16 (HL = D16)
+            cpu.h = op[2];
+            cpu.l = op[1];
+            cpu.pc += 3;
         },
         0x22 => {
-            unimplementedOpcode(op[0], cpu);
+            //STAX H
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            cpu.memory[hl] = cpu.a;
+            cpu.pc += 1;
         },
         0x23 => {
-            unimplementedOpcode(op[0], cpu);
+            //INX H (HL = HL + 1)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            hl += 1;
+
+            cpu.h = @truncate(u8, (hl >> 8));
+            cpu.l = @truncate(u8, hl);
+
+            cpu.pc += 1;
         },
         0x24 => {
-            unimplementedOpcode(op[0], cpu);
+            //INR H (H = H + 1)
+            var result: u16 = cpu.h;
+            result += 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.h = result;
+            cpu.pc += 1;
         },
         0x25 => {
-            unimplementedOpcode(op[0], cpu);
+            //DCR H (H = H - 1)
+            var result: u16 = cpu.h;
+            result -= 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.h = result;
+            cpu.pc += 1;
         },
         0x26 => {
-            unimplementedOpcode(op[0], cpu);
+            //MVI H, D8 (H = D8)
+            cpu.h = op[1];
+            cpu.pc += 2;
         },
         0x27 => {
             unimplementedOpcode(op[0], cpu);
         },
         0x29 => {
-            unimplementedOpcode(op[0], cpu);
+            //DAD H (HL = HL *= 2)
+            var hl: u17 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            hl = hl << 1;
+            cpu.cc.cy = @boolToInt(((hl & 0x100) != 0));
+            cpu.h = @truncate(u8, hl >> 8);
+            cpu.l = @truncate(u8, hl);
+            cpu.pc += 1;
         },
         0x2a => {
-            unimplementedOpcode(op[0], cpu);
+            //LDAX H (A = (HL))
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            cpu.a = cpu.memory[hl];
+            cpu.pc += 1;
         },
         0x2b => {
-            unimplementedOpcode(op[0], cpu);
+            //DLX H (HL = HL - 1)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+            hl -= 1;
+
+            cpu.h = @truncate(u8, (hl >> 8));
+            cpu.l = @truncate(u8, hl);
+            cpu.pc += 1;
         },
         0x2c => {
-            unimplementedOpcode(op[0], cpu);
+            //INR L (L = L + 1)
+            var result: u16 = cpu.l;
+            result += 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.l = result;
+            cpu.pc += 1;
         },
         0x2d => {
-            unimplementedOpcode(op[0], cpu);
+            //DCR L (L = L - 1)
+            var result: u16 = cpu.l;
+            result -= 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.l = result;
+            cpu.pc += 1;
         },
         0x2e => {
-            unimplementedOpcode(op[0], cpu);
+            //MVI L, D8 (L = D8)
+            cpu.l = op[1];
+            cpu.pc += 2;
         },
         0x2f => {
             //CMA (A = !A)
@@ -208,43 +438,120 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x31 => {
-            unimplementedOpcode(op[0], cpu);
+            //LXI SP, D16 (SP = D16)
+            var new_sp: u16 = op[2];
+            new_sp = new_sp << 8;
+            new_sp += op[1];
+            cpu.sp = new_sp;
+            cpu.pc += 3;
         },
         0x32 => {
-            unimplementedOpcode(op[0], cpu);
+            //STA addr ((addr) = A)
+            var addr: u16 = op[2];
+            addr = addr << 8;
+            addr += op[1];
+
+            cpu.memory[addr] = cpu.a;
         },
         0x33 => {
-            unimplementedOpcode(op[0], cpu);
+            //INX SP (SP = SP + 1)
+            cpu.sp += 1;
+            cpu.pc += 1;
         },
         0x34 => {
-            unimplementedOpcode(op[0], cpu);
+            //INR M ((HL) = (HL) + 1)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            var result: u16 = cpu.memory[hl];
+            result += 1;
+            cpu.memory[hl] = result;
+
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.pc += 1;
         },
         0x35 => {
-            unimplementedOpcode(op[0], cpu);
+            //DCR M ((HL) = (HL) - 1)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            var result: u16 = cpu.memory[hl];
+            result -= 1;
+            cpu.memory[hl] = result;
+
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.pc += 1;
         },
         0x36 => {
-            unimplementedOpcode(op[0], cpu);
+            //MVI M, D8 ((HL) = D8)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            cpu.memory[hl] = op[1];
+            cpu.pc += 2;
         },
         0x37 => {
+            //STC
             cpu.cc.cy = 1;
         },
         0x39 => {
-            unimplementedOpcode(op[0], cpu);
+            //DAD SP (HL = HL + SP)
+            var hl: u17 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            hl += cpu.sp;
+            cpu.cc.cy = @boolToInt(((hl & 0x100) != 0));
+            cpu.h = @truncate(u8, hl >> 8);
+            cpu.l = @truncate(u8, hl);
+            cpu.pc += 1;
         },
         0x3a => {
-            unimplementedOpcode(op[0], cpu);
+            //LDA addr (A = (addr))
+            var addr: u16 = op[2];
+            addr = addr << 8;
+            addr += op[1];
+
+            cpu.a = cpu.memory[addr];
+            cpu.pc += 3;
         },
         0x3b => {
-            unimplementedOpcode(op[0], cpu);
+            //DCX SP (SP = SP - 1)
+            cpu.sp -= 1;
+            cpu.pc += 1;
         },
         0x3c => {
-            unimplementedOpcode(op[0], cpu);
+            //INR A (A = A + 1)
+            var result: u16 = cpu.a;
+            result += 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = result;
+            cpu.pc += 1;
         },
         0x3d => {
+            //DCR A (A = A + 1)
+            var result: u16 = cpu.a;
+            result -= 1;
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = result;
+            cpu.pc += 1;
             unimplementedOpcode(op[0], cpu);
         },
         0x3e => {
-            unimplementedOpcode(op[0], cpu);
+            //MVI A, D8 (A = D8)
+            cpu.a = op[1];
+            cpu.pc += 2;
         },
         0x3f => {
             cpu.cc.cy = ~cpu.cc.cy;
@@ -1933,16 +2240,16 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode(op[0], cpu);
         },
         //NOPS
-        0xfd, 0xed, 0x08, 0x10, 0xdd, 0xd9, 0xcb, 0x38, 0x30, 0x28, 0x20, 0x18 => {
+        0xfd, 0xed, 0x08, 0x10, 0xdd, 0xd9, 0xcb, 0x38, 0x30, 0x28, 0x18 => {
             cpu.pc += 1;
         },
     }
 }
 
 pub fn unimplementedOpcode(op: u8, cpu: *CPU) void {
-    print("Unimplemented Opcode 0x{x:0>2}\n", .{op});
+    print("Unimplemented Opcode 0x{x:0>2} (", .{op});
     _ = disassemble(cpu.memory, cpu.pc);
-    print("\n", .{});
+    print(")\n", .{});
     std.os.exit(1);
 }
 
@@ -2070,6 +2377,10 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
         },
         0x1f => {
             print("\x1b[0;34m{x:0>2}\x1b[0m     RAR", .{op});
+            return 1;
+        },
+        0x20 => {
+            print("\x1b[0;34m{x:0>2}\x1b[0m     RIM", .{op});
             return 1;
         },
         0x21 => {
@@ -2932,7 +3243,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             print("\x1b[0;34m{x:0>2}\x1b[0m     RST 7", .{op});
             return 1;
         },
-        0xfd, 0xed, 0x08, 0x10, 0xdd, 0xd9, 0xcb, 0x38, 0x30, 0x28, 0x20, 0x18 => {
+        0xfd, 0xed, 0x08, 0x10, 0xdd, 0xd9, 0xcb, 0x38, 0x30, 0x28, 0x18 => {
             print("\x1b[0;34m{x:0>2}\x1b[0m     NOP", .{op});
             return 1;
         },
@@ -3015,8 +3326,8 @@ pub fn main() !void {
         //disassembleWholeProg(mem);
         var cpu = try initCpu(mem, alloc);
         while (true) {
-            emulate(cpu);
             printCpuStatus(cpu);
+            emulate(cpu);
         }
     }
 }
