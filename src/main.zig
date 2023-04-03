@@ -59,19 +59,19 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 3;
         },
         0x02 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x03 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x04 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x05 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x06 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x07 => {
             //RLC (A = (A << 1) | ((A & 0x80) >> 7) )
@@ -83,22 +83,22 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x09 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x0a => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x0b => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x0c => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x0d => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x0e => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x0f => {
             //RRC (A = (A & 1 << 7) | (A >> 1) )
@@ -109,25 +109,25 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x11 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x12 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x13 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x14 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x15 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x16 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x17 => {
-            //RLC (A = (A << 1) | CY)
+            //RAL (A = (A << 1) | CY)
             var op1: u8 = cpu.a;
             var op2: u8 = @as(u8, cpu.cc.cy);
             var bit7: u8 = (op1 & 0x80) >> 7;
@@ -137,22 +137,22 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x19 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x1a => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x1b => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x1c => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x1d => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x1e => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x1f => {
             //RAR (A = (CY << 7) | (A >> 1) )
@@ -164,43 +164,43 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x21 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x22 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x23 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x24 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x25 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x26 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x27 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x29 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x2a => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x2b => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x2c => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x2d => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x2e => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x2f => {
             //CMA (A = !A)
@@ -208,238 +208,413 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x31 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x32 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x33 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x34 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x35 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x36 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x37 => {
             cpu.cc.cy = 1;
         },
         0x39 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x3a => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x3b => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x3c => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x3d => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x3e => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x3f => {
             cpu.cc.cy = ~cpu.cc.cy;
         },
         0x40 => {
-            unimplementedOpcode();
+            //MOV B, B (B = B)
+            cpu.b = cpu.b;
+            cpu.pc += 1;
         },
         0x41 => {
-            unimplementedOpcode();
+            //MOV B, C (B = C)
+            cpu.b = cpu.c;
+            cpu.pc += 1;
         },
         0x42 => {
-            unimplementedOpcode();
+            //MOV B, D (B = D)
+            cpu.b = cpu.d;
+            cpu.pc += 1;
         },
         0x43 => {
-            unimplementedOpcode();
+            //MOV B, E (B = E)
+            cpu.b = cpu.e;
+            cpu.pc += 1;
         },
         0x44 => {
-            unimplementedOpcode();
+            //MOV B, H (B = H)
+            cpu.b = cpu.h;
+            cpu.pc += 1;
         },
         0x45 => {
-            unimplementedOpcode();
+            //MOV B, L (B = L)
+            cpu.b = cpu.l;
+            cpu.pc += 1;
         },
         0x46 => {
-            unimplementedOpcode();
+            //MOV B, M (B = (HL))
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            cpu.b = cpu.memory[hl];
+            cpu.pc += 1;
         },
         0x47 => {
-            unimplementedOpcode();
+            //MOV B, A (B = A)
+            cpu.b = cpu.a;
+            cpu.pc += 1;
         },
         0x48 => {
-            unimplementedOpcode();
+            //MOV C, B (C = B)
+            cpu.c = cpu.b;
+            cpu.pc += 1;
         },
         0x49 => {
-            unimplementedOpcode();
+            //MOV C, C (C = C)
+            cpu.c = cpu.c;
+            cpu.pc += 1;
         },
         0x4a => {
-            unimplementedOpcode();
+            //MOV C, D (C = D)
+            cpu.c = cpu.d;
+            cpu.pc += 1;
         },
         0x4b => {
-            unimplementedOpcode();
+            //MOV C, E (C = E)
+            cpu.c = cpu.e;
+            cpu.pc += 1;
         },
         0x4c => {
-            unimplementedOpcode();
+            //MOV C, H (C = H)
+            cpu.c = cpu.h;
+            cpu.pc += 1;
         },
         0x4d => {
-            unimplementedOpcode();
+            //MOV C, L (C = L)
+            cpu.c = cpu.l;
+            cpu.pc += 1;
         },
         0x4e => {
-            unimplementedOpcode();
+            //MOV C, M (C = (HL))
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            cpu.c = cpu.memory[hl];
+            cpu.pc += 1;
         },
         0x4f => {
-            unimplementedOpcode();
+            //MOV C, A (C = A)
+            cpu.c = cpu.a;
+            cpu.pc += 1;
         },
         0x50 => {
-            unimplementedOpcode();
+            //MOV D, B (D = B)
+            cpu.d = cpu.b;
+            cpu.pc += 1;
         },
         0x51 => {
-            unimplementedOpcode();
+            //MOV D, C (D = C)
+            cpu.d = cpu.c;
+            cpu.pc += 1;
         },
         0x52 => {
-            unimplementedOpcode();
+            //MOV D, D (D = D)
+            cpu.d = cpu.d;
+            cpu.pc += 1;
         },
         0x53 => {
-            unimplementedOpcode();
+            //MOV D, E (D = E)
+            cpu.d = cpu.e;
+            cpu.pc += 1;
         },
         0x54 => {
-            unimplementedOpcode();
+            //MOV D, H (D = H)
+            cpu.d = cpu.h;
+            cpu.pc += 1;
         },
         0x55 => {
-            unimplementedOpcode();
+            //MOV D, L (D = L)
+            cpu.d = cpu.l;
+            cpu.pc += 1;
         },
         0x56 => {
-            unimplementedOpcode();
+            //MOV D, M (D = (HL))
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            cpu.d = cpu.memory[hl];
+            cpu.pc += 1;
         },
         0x57 => {
-            unimplementedOpcode();
+            //MOV D, A (D = A)
+            cpu.d = cpu.a;
+            cpu.pc += 1;
         },
         0x58 => {
-            unimplementedOpcode();
+            //MOV E, B (E = B)
+            cpu.e = cpu.b;
+            cpu.pc += 1;
         },
         0x59 => {
-            unimplementedOpcode();
+            //MOV E, C (E = C)
+            cpu.e = cpu.c;
+            cpu.pc += 1;
         },
         0x5a => {
-            unimplementedOpcode();
+            //MOV E, D (E = D)
+            cpu.e = cpu.d;
+            cpu.pc += 1;
         },
         0x5b => {
-            unimplementedOpcode();
+            //MOV E, E (E = E)
+            cpu.e = cpu.e;
+            cpu.pc += 1;
         },
         0x5c => {
-            unimplementedOpcode();
+            //MOV E, H (E = H)
+            cpu.e = cpu.h;
+            cpu.pc += 1;
         },
         0x5d => {
-            unimplementedOpcode();
+            //MOV E, L (E = L)
+            cpu.e = cpu.l;
+            cpu.pc += 1;
         },
         0x5e => {
-            unimplementedOpcode();
+            //MOV E, M (E = (HL))
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            cpu.e = cpu.memory[hl];
+            cpu.pc += 1;
         },
         0x5f => {
-            unimplementedOpcode();
+            //MOV E, A (E = A)
+            cpu.e = cpu.a;
+            cpu.pc += 1;
         },
         0x60 => {
-            unimplementedOpcode();
+            //MOV H, B (H = B)
+            cpu.h = cpu.b;
+            cpu.pc += 1;
         },
         0x61 => {
-            unimplementedOpcode();
+            //MOV H, C (H = C)
+            cpu.h = cpu.c;
+            cpu.pc += 1;
         },
         0x62 => {
-            unimplementedOpcode();
+            //MOV H, D (H = D)
+            cpu.h = cpu.d;
+            cpu.pc += 1;
         },
         0x63 => {
-            unimplementedOpcode();
+            //MOV H, E (H = E)
+            cpu.h = cpu.e;
+            cpu.pc += 1;
         },
         0x64 => {
-            unimplementedOpcode();
+            //MOV H, H (H = H)
+            cpu.h = cpu.h;
+            cpu.pc += 1;
         },
         0x65 => {
-            unimplementedOpcode();
+            //MOV H, L (H = L)
+            cpu.h = cpu.l;
+            cpu.pc += 1;
         },
         0x66 => {
-            unimplementedOpcode();
+            //MOV H, M (H = (HL))
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            cpu.h = cpu.memory[hl];
+            cpu.pc += 1;
         },
         0x67 => {
-            unimplementedOpcode();
+            //MOV H, A (H = A)
+            cpu.h = cpu.a;
+            cpu.pc += 1;
         },
         0x68 => {
-            unimplementedOpcode();
+            //MOV L, B (L = B)
+            cpu.l = cpu.b;
+            cpu.pc += 1;
         },
         0x69 => {
-            unimplementedOpcode();
+            //MOV L, C (L = C)
+            cpu.l = cpu.c;
+            cpu.pc += 1;
         },
         0x6a => {
-            unimplementedOpcode();
+            //MOV L, D (L = D)
+            cpu.l = cpu.d;
+            cpu.pc += 1;
         },
         0x6b => {
-            unimplementedOpcode();
+            //MOV L, E (L = E)
+            cpu.l = cpu.e;
+            cpu.pc += 1;
         },
         0x6c => {
-            unimplementedOpcode();
+            //MOV L, H (L = H)
+            cpu.l = cpu.h;
+            cpu.pc += 1;
         },
         0x6d => {
-            unimplementedOpcode();
+            //MOV L, L (L = L)
+            cpu.l = cpu.l;
+            cpu.pc += 1;
         },
         0x6e => {
-            unimplementedOpcode();
+            //MOV L, M (L = (HL))
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            cpu.l = cpu.memory[hl];
+            cpu.pc += 1;
         },
         0x6f => {
-            unimplementedOpcode();
+            //MOV L, A (L = A)
+            cpu.l = cpu.a;
+            cpu.pc += 1;
         },
         0x70 => {
-            unimplementedOpcode();
+            //MOV M, B ((HL) = B)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+            cpu.memory[hl] = cpu.b;
+            cpu.pc += 1;
         },
         0x71 => {
-            unimplementedOpcode();
+            //MOV M, C ((HL) = C)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+            cpu.memory[hl] = cpu.c;
+            cpu.pc += 1;
         },
         0x72 => {
-            unimplementedOpcode();
+            //MOV M, D ((HL) = D)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+            cpu.memory[hl] = cpu.d;
+            cpu.pc += 1;
         },
         0x73 => {
-            unimplementedOpcode();
+            //MOV M, E ((HL) = E)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+            cpu.memory[hl] = cpu.e;
+            cpu.pc += 1;
         },
         0x74 => {
-            unimplementedOpcode();
+            //MOV M, H ((HL) = H)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+            cpu.memory[hl] = cpu.h;
+            cpu.pc += 1;
         },
         0x75 => {
-            unimplementedOpcode();
+            //MOV M, L ((HL) = L)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+            cpu.memory[hl] = cpu.l;
+            cpu.pc += 1;
         },
         0x76 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0x77 => {
-            unimplementedOpcode();
+            //MOV M, A ((HL) = A)
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+            cpu.memory[hl] = cpu.a;
+            cpu.pc += 1;
         },
         0x78 => {
-            unimplementedOpcode();
+            //MOV A, B (A = B)
+            cpu.l = cpu.a;
+            cpu.pc += 1;
         },
         0x79 => {
-            unimplementedOpcode();
+            //MOV A, C (A = C)
+            cpu.l = cpu.b;
+            cpu.pc += 1;
         },
         0x7a => {
-            unimplementedOpcode();
+            //MOV A, D (A = D)
+            cpu.l = cpu.c;
+            cpu.pc += 1;
         },
         0x7b => {
-            unimplementedOpcode();
+            //MOV A, E (A = E)
+            cpu.l = cpu.d;
+            cpu.pc += 1;
         },
         0x7c => {
-            unimplementedOpcode();
+            //MOV A, H (A = H)
+            cpu.l = cpu.h;
+            cpu.pc += 1;
         },
         0x7d => {
-            unimplementedOpcode();
+            //MOV A, L (A = L)
+            cpu.l = cpu.l;
+            cpu.pc += 1;
         },
         0x7e => {
-            unimplementedOpcode();
+            //MOV A, M (A = (HL))
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            cpu.l = cpu.memory[hl];
+            cpu.pc += 1;
         },
         0x7f => {
-            unimplementedOpcode();
+            //MOV A, A (A = A)
+            cpu.l = cpu.a;
+            cpu.pc += 1;
         },
         0x80 => {
             //ADD B (A = A + B)
@@ -1274,6 +1449,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.c = cpu.memory[cpu.sp];
             cpu.b = cpu.memory[cpu.sp + 1];
             cpu.sp += 2;
+            cpu.pc += 1;
         },
         0xc2 => {
             //JNZ addr
@@ -1310,13 +1486,13 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xc5 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xc6 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xc7 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xc8 => {
             //RZ
@@ -1384,10 +1560,10 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc = jmp_to;
         },
         0xce => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xcf => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xd0 => {
             //RNC
@@ -1408,6 +1584,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.e = cpu.memory[cpu.sp];
             cpu.d = cpu.memory[cpu.sp + 1];
             cpu.sp += 2;
+            cpu.pc += 1;
         },
         0xd2 => {
             //JNC addr
@@ -1422,7 +1599,7 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xd3 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xd4 => {
             //CNC addr
@@ -1440,13 +1617,13 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xd5 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xd6 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xd7 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xd8 => {
             //RC
@@ -1475,7 +1652,7 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xdb => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xdc => {
             //CC addr
@@ -1493,10 +1670,10 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xde => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xdf => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xe0 => {
             //RPO
@@ -1517,6 +1694,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.l = cpu.memory[cpu.sp];
             cpu.h = cpu.memory[cpu.sp + 1];
             cpu.sp += 2;
+            cpu.pc += 1;
         },
         0xe2 => {
             //JPO addr
@@ -1541,6 +1719,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.l = sp1;
             cpu.memory[cpu.sp] = l;
             cpu.memory[cpu.sp + 1] = h;
+            cpu.pc += 1;
         },
         0xe4 => {
             //CPO addr
@@ -1558,7 +1737,7 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xe5 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xe6 => {
             //ANI D8 (A = A & D8)
@@ -1574,7 +1753,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 2;
         },
         0xe7 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xe8 => {
             //RPE
@@ -1591,7 +1770,7 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xe9 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xea => {
             //JPE addr
@@ -1606,7 +1785,7 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xeb => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xec => {
             //CPE addr
@@ -1624,10 +1803,10 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xee => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xef => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xf0 => {
             //RP
@@ -1654,6 +1833,7 @@ pub fn emulate(cpu: *CPU) void {
 
             cpu.a = cpu.memory[cpu.sp + 1];
             cpu.sp += 2;
+            cpu.pc += 1;
         },
         0xf2 => {
             //JP addr
@@ -1668,7 +1848,7 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xf3 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xf4 => {
             //CP addr
@@ -1686,13 +1866,13 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xf5 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xf6 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xf7 => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xf8 => {
             //RM
@@ -1714,6 +1894,7 @@ pub fn emulate(cpu: *CPU) void {
             new_sp = new_sp << 8;
             new_sp += cpu.l;
             cpu.sp = new_sp;
+            cpu.pc += 1;
         },
         0xfa => {
             //JM addr
@@ -1728,7 +1909,7 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xfb => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xfc => {
             //CM addr
@@ -1746,10 +1927,10 @@ pub fn emulate(cpu: *CPU) void {
             }
         },
         0xfe => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         0xff => {
-            unimplementedOpcode();
+            unimplementedOpcode(op[0], cpu);
         },
         //NOPS
         0xfd, 0xed, 0x08, 0x10, 0xdd, 0xd9, 0xcb, 0x38, 0x30, 0x28, 0x20, 0x18 => {
@@ -1758,8 +1939,10 @@ pub fn emulate(cpu: *CPU) void {
     }
 }
 
-pub fn unimplementedOpcode() void {
-    print("Unimplemented Opcode\n", .{});
+pub fn unimplementedOpcode(op: u8, cpu: *CPU) void {
+    print("Unimplemented Opcode 0x{x:0>2}\n", .{op});
+    _ = disassemble(cpu.memory, cpu.pc);
+    std.os.exit(1);
 }
 
 //pc should only have access to 16 bits
@@ -2761,7 +2944,8 @@ fn readEmuFile(file_name: []const u8, alloc: std.mem.Allocator) ![]u8 {
     var file = try cwd.openFile(file_name, .{});
     defer file.close();
     //const file_reader: std.io.Reader = file.reader();
-    return try file.readToEndAlloc(alloc, std.math.maxInt(usize));
+    //Memory is actually 0x4000 in size, so want to read in and allocate at LEAST that large of a buffer
+    return try file.readToEndAllocOptions(alloc, std.math.maxInt(usize), 0x4000, 1, 0);
 }
 
 pub fn disassembleWholeProg(progBuf: []u8) void {
@@ -2829,14 +3013,9 @@ pub fn main() !void {
 
         disassembleWholeProg(mem);
         var cpu = try initCpu(mem, alloc);
-        //For instruction testing, at the moment
-        cpu.pc = 0x26c;
-        cpu.sp = 0x1fef;
-        cpu.h = 0xab;
-        cpu.l = 0xcd;
-        printCpuStatus(cpu);
-        emulate(cpu);
-        printCpuStatus(cpu);
-        //0x1a87: cde619 CALL 0x19e6
+        while (true) {
+            emulate(cpu);
+            printCpuStatus(cpu);
+        }
     }
 }
