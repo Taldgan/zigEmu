@@ -27,14 +27,21 @@ const CPU = struct {
     memory: []u8,
 };
 
+pub fn parity(result: u16) u1 {
+    if (result % 2 == 0) {
+        return 1;
+    }
+    return 0;
+}
+
 pub fn printCpuStatus(pCpu: *CPU) void {
     var cpu = pCpu.*;
-    print(" a: 0x{x:0>2}\n b: 0x{x:0>2}\n c: 0x{x:0>2}\n", .{ cpu.a, cpu.b, cpu.c });
-    print(" d: 0x{x:0>2}\n e: 0x{x:0>2}\n h: 0x{x:0>2}\n l: 0x{x:0>2}\n", .{ cpu.d, cpu.e, cpu.h, cpu.l });
-    print(" pc: 0x{x:0>2} [", .{cpu.pc});
+    print(" a: 0x{x:0>2} b: 0x{x:0>2} c: 0x{x:0>2}", .{ cpu.a, cpu.b, cpu.c });
+    print(" d: 0x{x:0>2}\n e: 0x{x:0>2} h: 0x{x:0>2} l: 0x{x:0>2}\n", .{ cpu.d, cpu.e, cpu.h, cpu.l });
+    print(" pc: 0x{x:0>2} -> [", .{cpu.pc});
     _ = disassemble(cpu.memory, cpu.pc);
-    print("]\n sp: 0x{x:0>2}\n", .{cpu.sp});
-    print(" z:{b} s:{b} p:{b} cy:{b} ac:{b} pab:{b}", .{ cpu.cc.z, cpu.cc.s, cpu.cc.p, cpu.cc.cy, cpu.cc.ac, cpu.cc.pad });
+    print("]\n sp: 0x{x:0>2} -> [0x{x:0>2}{x:0>2}]\n", .{ cpu.sp, cpu.memory[cpu.sp + 1], cpu.memory[cpu.sp] });
+    print(" z:{b} s:{b} p:{b} cy:{b} ac:{b} pad:{b}", .{ cpu.cc.z, cpu.cc.s, cpu.cc.p, cpu.cc.cy, cpu.cc.ac, cpu.cc.pad });
     print("\n\n", .{});
 }
 
@@ -409,176 +416,727 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0x80 => {
-            unimplementedOpcode();
+            //ADD B (A = A + B)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.b;
+            var result: u16 = op1 + op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x81 => {
-            unimplementedOpcode();
+            //ADD C (A = A + C)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.c;
+            var result: u16 = op1 + op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x82 => {
-            unimplementedOpcode();
+            //ADD D (A = A + D)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.d;
+            var result: u16 = op1 + op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x83 => {
-            unimplementedOpcode();
+            //ADD E (A = A + E)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.e;
+            var result: u16 = op1 + op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x84 => {
-            unimplementedOpcode();
+            //ADD H (A = A + H)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.h;
+            var result: u16 = op1 + op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x85 => {
-            unimplementedOpcode();
+            //ADD L (A = A + L)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.l;
+            var result: u16 = op1 + op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x86 => {
-            unimplementedOpcode();
+            //ADD M (A = A + (HL))
+            //Dereference loc of HL, add that val
+            var op1: u16 = cpu.a;
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            var op2: u16 = cpu.memory[hl];
+            var result: u16 = op1 + op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x87 => {
-            unimplementedOpcode();
+            //ADD A (A = A + A)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.a;
+            var result: u16 = op1 + op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x88 => {
-            unimplementedOpcode();
+            //ADC B (A = A + B + CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.b;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 + op2 + op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x89 => {
-            unimplementedOpcode();
+            //ADC C (A = A + C + CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.c;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 + op2 + op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x8a => {
-            unimplementedOpcode();
+            //ADC D (A = A + D + CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.d;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 + op2 + op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x8b => {
-            unimplementedOpcode();
+            //ADC E (A = A + E + CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.e;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 + op2 + op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x8c => {
-            unimplementedOpcode();
+            //ADC H (A = A + H + CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.h;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 + op2 + op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x8d => {
-            unimplementedOpcode();
+            //ADC L (A = A + L + CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.l;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 + op2 + op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x8e => {
-            unimplementedOpcode();
+            //ADC M (A = A + (HL) + CY)
+            //Dereference loc of HL, add that val
+            var op1: u16 = cpu.a;
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            var op2: u16 = cpu.memory[hl];
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 + op2 + op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x8f => {
-            unimplementedOpcode();
+            //ADC A (A = A + A + CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.a;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 + op2 + op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x90 => {
-            unimplementedOpcode();
+            //SUB B (A = A - B)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.b;
+            var result: u16 = op1 - op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x91 => {
-            unimplementedOpcode();
+            //SUB C (A = A - C)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.c;
+            var result: u16 = op1 - op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x92 => {
-            unimplementedOpcode();
+            //SUB D (A = A - D)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.d;
+            var result: u16 = op1 - op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x93 => {
-            unimplementedOpcode();
+            //SUB E (A = A - E)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.e;
+            var result: u16 = op1 - op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x94 => {
-            unimplementedOpcode();
+            //SUB H (A = A - H)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.h;
+            var result: u16 = op1 - op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x95 => {
-            unimplementedOpcode();
+            //SUB L (A = A - L)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.l;
+            var result: u16 = op1 - op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x96 => {
-            unimplementedOpcode();
+            //SUB M (A = A - (HL))
+            //Dereference loc of HL, add that val
+            var op1: u16 = cpu.a;
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            var op2: u16 = cpu.memory[hl];
+            var result: u16 = op1 - op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x97 => {
-            unimplementedOpcode();
+            //SUB A (A = A - A)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.a;
+            var result: u16 = op1 - op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x98 => {
-            unimplementedOpcode();
+            //SBB B (A = A - B - CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.b;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 - op2 - op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x99 => {
-            unimplementedOpcode();
+            //SBB C (A = A - C - CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.c;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 - op2 - op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x9a => {
-            unimplementedOpcode();
+            //SBB D (A = A - D - CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.d;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 - op2 - op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x9b => {
-            unimplementedOpcode();
+            //SBB E (A = A - E - CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.e;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 - op2 - op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x9c => {
-            unimplementedOpcode();
+            //SBB H (A = A - H - CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.h;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 - op2 - op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x9d => {
-            unimplementedOpcode();
+            //SBB L (A = A - L - CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.l;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 - op2 - op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x9e => {
-            unimplementedOpcode();
+            //SBB M (A = A - (HL) - CY)
+            //Dereference loc of HL
+            var op1: u16 = cpu.a;
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            var op2: u16 = cpu.memory[hl];
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 - op2 - op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0x9f => {
-            unimplementedOpcode();
+            //SBB A (A = A - A - CY)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.a;
+            var op3: u16 = cpu.cc.cy;
+            var result: u16 = op1 - op2 - op3;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xa0 => {
-            unimplementedOpcode();
+            //ANA B (A = A & B)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.b;
+            var result: u16 = op1 & op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xa1 => {
-            unimplementedOpcode();
+            //ANA C (A = A & C)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.c;
+            var result: u16 = op1 & op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xa2 => {
-            unimplementedOpcode();
+            //ANA D (A = A & D)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.d;
+            var result: u16 = op1 & op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xa3 => {
-            unimplementedOpcode();
+            //ANA E (A = A & E)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.e;
+            var result: u16 = op1 & op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xa4 => {
-            unimplementedOpcode();
+            //ANA H (A = A & H)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.h;
+            var result: u16 = op1 & op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xa5 => {
-            unimplementedOpcode();
+            //ANA L (A = A & L)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.h;
+            var result: u16 = op1 & op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xa6 => {
-            unimplementedOpcode();
+            //ANA M (A = A & (HL))
+            //Dereference loc of HL
+            var op1: u16 = cpu.a;
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            var op2: u16 = cpu.memory[hl];
+            var result: u16 = op1 & op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xa7 => {
-            unimplementedOpcode();
+            //ANA A (A = A & A)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.a;
+            var result: u16 = op1 & op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xa8 => {
-            unimplementedOpcode();
+            //XRA B (A = A ^ B)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.b;
+            var result: u16 = op1 ^ op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xa9 => {
-            unimplementedOpcode();
+            //XRA C (A = A ^ C)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.c;
+            var result: u16 = op1 ^ op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xaa => {
-            unimplementedOpcode();
+            //XRA D (A = A ^ D)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.d;
+            var result: u16 = op1 ^ op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xab => {
-            unimplementedOpcode();
+            //XRA E (A = A ^ E)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.e;
+            var result: u16 = op1 ^ op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xac => {
-            unimplementedOpcode();
+            //XRA H (A = A ^ H)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.h;
+            var result: u16 = op1 ^ op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xad => {
-            unimplementedOpcode();
+            //XRA L (A = A ^ L)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.h;
+            var result: u16 = op1 ^ op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xae => {
-            unimplementedOpcode();
+            //XRA M (A = A ^ (HL))
+            var op1: u16 = cpu.a;
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            var op2: u16 = cpu.memory[hl];
+            var result: u16 = op1 ^ op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xaf => {
-            unimplementedOpcode();
+            //XRA A (A = A ^ A)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.a;
+            var result: u16 = op1 ^ op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xb0 => {
-            unimplementedOpcode();
+            //ORA B (A = A | B)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.b;
+            var result: u16 = op1 | op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xb1 => {
-            unimplementedOpcode();
+            //ORA C (A = A | C)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.c;
+            var result: u16 = op1 | op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xb2 => {
-            unimplementedOpcode();
+            //ORA D (A = A | D)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.d;
+            var result: u16 = op1 | op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xb3 => {
-            unimplementedOpcode();
+            //ORA E (A = A | E)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.e;
+            var result: u16 = op1 | op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xb4 => {
-            unimplementedOpcode();
+            //ORA H (A = A | H)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.h;
+            var result: u16 = op1 | op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xb5 => {
-            unimplementedOpcode();
+            //ORA L (A = A | L)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.h;
+            var result: u16 = op1 | op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xb6 => {
-            unimplementedOpcode();
+            //ORA M (A = A | (HL))
+            var op1: u16 = cpu.a;
+            var hl: u16 = cpu.h;
+            hl = hl << 8;
+            hl += cpu.l;
+
+            var op2: u16 = cpu.memory[hl];
+            var result: u16 = op1 | op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
         0xb7 => {
-            unimplementedOpcode();
+            //ORA A (A = A | A)
+            var op1: u16 = cpu.a;
+            var op2: u16 = cpu.a;
+            var result: u16 = op1 | op2;
+            cpu.a = @truncate(u8, result);
+            cpu.cc.z = @boolToInt(result == 0);
+            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.p = parity(result);
+            cpu.pc += 1;
         },
-        0xb8 => {
-            unimplementedOpcode();
-        },
+        0xb8 => {},
         0xb9 => {
             unimplementedOpcode();
         },
@@ -607,10 +1165,23 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xc2 => {
-            unimplementedOpcode();
+            //JNZ addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+
+            if (cpu.cc.z == 0) {
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 3;
+            }
         },
         0xc3 => {
-            unimplementedOpcode();
+            //JMP addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+            cpu.pc = jmp_to;
         },
         0xc4 => {
             unimplementedOpcode();
@@ -631,7 +1202,16 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xca => {
-            unimplementedOpcode();
+            //JZ addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+
+            if (cpu.cc.z == 1) {
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 3;
+            }
         },
         0xcc => {
             unimplementedOpcode();
@@ -652,7 +1232,16 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xd2 => {
-            unimplementedOpcode();
+            //JNC addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+
+            if (cpu.cc.cy == 0) {
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 3;
+            }
         },
         0xd3 => {
             unimplementedOpcode();
@@ -673,7 +1262,16 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xda => {
-            unimplementedOpcode();
+            //JC addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+
+            if (cpu.cc.cy == 1) {
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 3;
+            }
         },
         0xdb => {
             unimplementedOpcode();
@@ -694,7 +1292,16 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xe2 => {
-            unimplementedOpcode();
+            //JPO addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+
+            if (cpu.cc.p == 0) {
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 3;
+            }
         },
         0xe3 => {
             unimplementedOpcode();
@@ -718,7 +1325,16 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xea => {
-            unimplementedOpcode();
+            //JPE addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+
+            if (cpu.cc.p == 1) {
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 3;
+            }
         },
         0xeb => {
             unimplementedOpcode();
@@ -739,7 +1355,16 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xf2 => {
-            unimplementedOpcode();
+            //JP addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+
+            if (cpu.cc.s == 0) {
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 3;
+            }
         },
         0xf3 => {
             unimplementedOpcode();
@@ -763,7 +1388,16 @@ pub fn emulate(cpu: *CPU) void {
             unimplementedOpcode();
         },
         0xfa => {
-            unimplementedOpcode();
+            //JM addr
+            var jmp_to: u16 = op[2];
+            jmp_to = jmp_to << 8;
+            jmp_to += op[1];
+
+            if (cpu.cc.s == 1) {
+                cpu.pc = jmp_to;
+            } else {
+                cpu.pc += 3;
+            }
         },
         0xfb => {
             unimplementedOpcode();
@@ -1855,7 +2489,8 @@ pub fn main() !void {
 
         disassembleWholeProg(mem);
         var cpu = try initCpu(mem, alloc);
-        cpu.pc = 0xbae;
+        //For instruction testing, at the moment
+        cpu.pc = 0x1a7b;
         printCpuStatus(cpu);
         emulate(cpu);
         printCpuStatus(cpu);
