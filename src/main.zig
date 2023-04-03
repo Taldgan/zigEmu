@@ -3346,9 +3346,12 @@ pub fn main() !void {
         //once deinit() is called
         defer arena.deinit();
         var mem = try alloc.alloc(u8, 0x4000);
-        try readEmuFile(name, mem);
-        print("MEM LEN: 0x{x}\n", .{mem.len});
+        //Zero out memory
+        for (mem) |_, i| {
+            mem[i] = 0;
+        }
 
+        try readEmuFile(name, mem);
         //disassembleWholeProg(mem);
         var cpu = try initCpu(mem, alloc);
         var inst_count: u64 = 0;
@@ -3357,9 +3360,6 @@ pub fn main() !void {
             emulate(cpu);
             inst_count += 1;
             print("Instructions Executed: {d}\n", .{inst_count});
-            if (inst_count == 200) {
-                break;
-            }
         }
     }
 }
