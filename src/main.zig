@@ -83,7 +83,7 @@ pub fn emulate(cpu: *CPU) void {
         0x04 => {
             //INR B (B = B + 1)
             var result: u16 = cpu.b;
-            result += 1;
+            result +%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -93,7 +93,7 @@ pub fn emulate(cpu: *CPU) void {
         0x05 => {
             //DCR B (B = B - 1)
             var result: u16 = cpu.b;
-            result -= 1;
+            result -%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -153,7 +153,7 @@ pub fn emulate(cpu: *CPU) void {
         0x0c => {
             //INR C (C = C + 1)
             var result: u16 = cpu.c;
-            result += 1;
+            result +%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -163,7 +163,7 @@ pub fn emulate(cpu: *CPU) void {
         0x0d => {
             //DCR C (C = C - 1)
             var result: u16 = cpu.c;
-            result -= 1;
+            result -%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -213,7 +213,7 @@ pub fn emulate(cpu: *CPU) void {
         0x14 => {
             //INR D (D = D + 1)
             var result: u16 = cpu.d;
-            result += 1;
+            result +%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -223,7 +223,7 @@ pub fn emulate(cpu: *CPU) void {
         0x15 => {
             //DCR D (D = D - 1)
             var result: u16 = cpu.d;
-            result -= 1;
+            result -%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -284,7 +284,7 @@ pub fn emulate(cpu: *CPU) void {
         0x1c => {
             //INR E (E = E + 1)
             var result: u16 = cpu.e;
-            result += 1;
+            result +%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -294,7 +294,7 @@ pub fn emulate(cpu: *CPU) void {
         0x1d => {
             //DCR E (E = E - 1)
             var result: u16 = cpu.e;
-            result -= 1;
+            result -%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -350,7 +350,7 @@ pub fn emulate(cpu: *CPU) void {
         0x24 => {
             //INR H (H = H + 1)
             var result: u16 = cpu.h;
-            result += 1;
+            result +%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -360,7 +360,7 @@ pub fn emulate(cpu: *CPU) void {
         0x25 => {
             //DCR H (H = H - 1)
             var result: u16 = cpu.h;
-            result -= 1;
+            result -%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -410,7 +410,7 @@ pub fn emulate(cpu: *CPU) void {
         0x2c => {
             //INR L (L = L + 1)
             var result: u16 = cpu.l;
-            result += 1;
+            result +%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -420,7 +420,7 @@ pub fn emulate(cpu: *CPU) void {
         0x2d => {
             //DCR L (L = L - 1)
             var result: u16 = cpu.l;
-            result -= 1;
+            result -%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -465,7 +465,7 @@ pub fn emulate(cpu: *CPU) void {
             hl += cpu.l;
 
             var result: u16 = cpu.memory[hl];
-            result += 1;
+            result +%= 1;
             cpu.memory[hl] = @truncate(u8, result);
 
             cpu.cc.z = @boolToInt(result == 0);
@@ -480,7 +480,7 @@ pub fn emulate(cpu: *CPU) void {
             hl += cpu.l;
 
             var result: u16 = cpu.memory[hl];
-            result -= 1;
+            result -%= 1;
             cpu.memory[hl] = @truncate(u8, result);
 
             cpu.cc.z = @boolToInt(result == 0);
@@ -530,7 +530,7 @@ pub fn emulate(cpu: *CPU) void {
         0x3c => {
             //INR A (A = A + 1)
             var result: u16 = cpu.a;
-            result += 1;
+            result +%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -540,7 +540,7 @@ pub fn emulate(cpu: *CPU) void {
         0x3d => {
             //DCR A (A = A + 1)
             var result: u16 = cpu.a;
-            result -= 1;
+            result -%= 1;
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
@@ -1784,8 +1784,8 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 3;
             if (cpu.cc.z == 0) {
                 //Write ret addr
-                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 1] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp - 2] = @truncate(u8, (cpu.pc >> 8));
                 //Decrement SP, jump
                 cpu.sp -= 2;
                 cpu.pc = jmp_to;
@@ -1848,8 +1848,8 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 3;
             if (cpu.cc.z == 1) {
                 //Write ret addr
-                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 1] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp - 2] = @truncate(u8, (cpu.pc >> 8));
                 //Decrement SP, jump
                 cpu.sp -= 2;
                 cpu.pc = jmp_to;
@@ -1863,8 +1863,8 @@ pub fn emulate(cpu: *CPU) void {
 
             //Write ret addr
             cpu.pc += 3;
-            cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
-            cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+            cpu.memory[cpu.sp - 1] = @truncate(u8, cpu.pc);
+            cpu.memory[cpu.sp - 2] = @truncate(u8, (cpu.pc >> 8));
             //Decrement SP, jump
             cpu.sp -= 2;
             cpu.pc = jmp_to;
@@ -1919,8 +1919,8 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 3;
             if (cpu.cc.cy == 0) {
                 //Write ret addr
-                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 1] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp - 2] = @truncate(u8, (cpu.pc >> 8));
                 //Decrement SP, jump
                 cpu.sp -= 2;
                 cpu.pc = jmp_to;
@@ -1976,8 +1976,8 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 3;
             if (cpu.cc.cy == 1) {
                 //Write ret addr
-                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 1] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp - 2] = @truncate(u8, (cpu.pc >> 8));
                 //Decrement SP, jump
                 cpu.sp -= 2;
                 cpu.pc = jmp_to;
@@ -2043,8 +2043,8 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 3;
             if (cpu.cc.p == 0) {
                 //Write ret addr
-                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 1] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp - 2] = @truncate(u8, (cpu.pc >> 8));
                 //Decrement SP, jump
                 cpu.sp -= 2;
                 cpu.pc = jmp_to;
@@ -2113,8 +2113,8 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 3;
             if (cpu.cc.p == 1) {
                 //Write ret addr
-                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 1] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp - 2] = @truncate(u8, (cpu.pc >> 8));
                 //Decrement SP, jump
                 cpu.sp -= 2;
                 cpu.pc = jmp_to;
@@ -2176,8 +2176,8 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 3;
             if (cpu.cc.s == 0) {
                 //Write ret addr
-                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 1] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp - 2] = @truncate(u8, (cpu.pc >> 8));
                 //Decrement SP, jump
                 cpu.sp -= 2;
                 cpu.pc = jmp_to;
@@ -2250,8 +2250,8 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 3;
             if (cpu.cc.s == 1) {
                 //Write ret addr
-                cpu.memory[cpu.sp] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp + 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 1] = @truncate(u8, cpu.pc);
+                cpu.memory[cpu.sp - 2] = @truncate(u8, (cpu.pc >> 8));
                 //Decrement SP, jump
                 cpu.sp -= 2;
                 cpu.pc = jmp_to;
@@ -3275,13 +3275,13 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
     return 0;
 }
 
-fn readEmuFile(file_name: []const u8, alloc: std.mem.Allocator) ![]u8 {
+fn readEmuFile(file_name: []const u8, mem: []u8) !void {
     const cwd = std.fs.cwd();
     var file = try cwd.openFile(file_name, .{});
     defer file.close();
     //const file_reader: std.io.Reader = file.reader();
     //Memory is actually 0x4000 in size, so want to read in and allocate at LEAST that large of a buffer
-    return try file.readToEndAllocOptions(alloc, std.math.maxInt(usize), 0x4000, 1, 0);
+    _ = try file.readAll(mem);
 }
 
 pub fn disassembleWholeProg(progBuf: []u8) void {
@@ -3345,13 +3345,21 @@ pub fn main() !void {
         //Arena allocators deinit ALL memory allocated using it
         //once deinit() is called
         defer arena.deinit();
-        var mem = try readEmuFile(name, alloc);
+        var mem = try alloc.alloc(u8, 0x4000);
+        try readEmuFile(name, mem);
+        print("MEM LEN: 0x{x}\n", .{mem.len});
 
         //disassembleWholeProg(mem);
         var cpu = try initCpu(mem, alloc);
+        var inst_count: u64 = 0;
         while (true) {
             printCpuStatus(cpu);
             emulate(cpu);
+            inst_count += 1;
+            print("Instructions Executed: {d}\n", .{inst_count});
+            if (inst_count == 200) {
+                break;
+            }
         }
     }
 }
