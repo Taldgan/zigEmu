@@ -2,11 +2,17 @@ const std = @import("std");
 const stdin = std.io.getStdIn();
 const stdout = std.io.getStdOut();
 
-var cmdHashMap = std.ArrayHashMap();
+///TODO
+pub fn createCommand(comptime T: type) type {
+    return struct {
+        key: []const u8,
+        func: *T,
+    };
+}
 
-///Initializes the command hashmap used when user command inputs
-///are being parsed
-pub fn initCmdHashMap() !void {}
+///TODO - take in comptime command structs and
+///map them to a hashmap
+pub fn initCmdHashMap() void {}
 
 ///Provide user input prompt.
 ///Array of user inputs are returned
@@ -18,9 +24,9 @@ pub fn prompt(alloc: std.mem.Allocator) ![][]const u8 {
     var cmdList = std.ArrayList([]const u8).init(alloc);
 
     const largeCmd = cmdIterator.first();
-    try cmdList.appendSlice(largeCmd);
+    try cmdList.append(largeCmd);
     while (cmdIterator.next()) |arg| {
-        try cmdList.appendSlice(arg);
+        try cmdList.append(arg);
     }
     return cmdList.toOwnedSlice();
 }

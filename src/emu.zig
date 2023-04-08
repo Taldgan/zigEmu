@@ -9,7 +9,10 @@ pub fn main() !void {
     const alloc = arena.allocator();
     defer arena.deinit();
 
+    comptime icli.initCmdHashMap();
+
     while (true) {
-        _ = try icli.prompt(alloc);
+        var response: [][]const u8 = try icli.prompt(alloc);
+        _ = response;
     }
 }
