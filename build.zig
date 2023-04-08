@@ -11,7 +11,9 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("zigEmu", "src/main.zig");
+    const exe = b.addExecutable("zigEmu", "src/emu.zig");
+    exe.addPackagePath("cpu", "lib/cpu.zig");
+    exe.addPackagePath("cli", "lib/cli.zig");
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.install();
@@ -25,7 +27,16 @@ pub fn build(b: *std.build.Builder) void {
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 
-    const exe_tests = b.addTest("src/main.zig");
+    const emuDocs = b.addExecutable("zigEmu", "src/emu.zig");
+    emuDocs.addPackagePath("cpu", "lib/cpu.zig");
+    emuDocs.addPackagePath("cli", "lib/cli.zig");
+    emuDocs.setBuildMode(mode);
+    emuDocs.emit_docs = .emit;
+
+    const docs_step = b.step("docs", "Generate documentation");
+    docs_step.dependOn(&emuDocs.step);
+
+    const exe_tests = b.addTest("src/emu.zig");
     exe_tests.setTarget(target);
     exe_tests.setBuildMode(mode);
 
