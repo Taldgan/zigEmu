@@ -18,7 +18,7 @@ or
 
     zig build run -- {ARGS}
 
-Executable will be generated in (project_root)/zig-out/bin/zigEmu
+Executable will be generated in `(project_root)/zig-out/bin/zigEmu`
 
 Code documentation can be generated using
     zig build docs
