@@ -13,4 +13,12 @@ as well as a drawn window that emulates hardware inputs
 
 ## Build instructions
     zig build
+
+or
+
+    zig build run -- {ARGS}
+
 Executable will be generated in (project_root)/zig-out/bin/zigEmu
+
+Code documentation can be generated using
+    zig build docs
