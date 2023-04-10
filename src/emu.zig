@@ -11,43 +11,49 @@ fn parseCommands(args: [][]const u8, pCpu: *icpu.CPU) !void {
             icpu.printCpuStatus(pCpu);
         } else {
             for (args[1..]) |reg| {
-                const ourReg: u16 = switch (reg[0]) {
-                    'a' => pCpu.a,
-                    'b' => pCpu.b,
-                    'c' => pCpu.c,
-                    'd' => pCpu.d,
-                    'e' => pCpu.e,
-                    'h' => pCpu.h,
-                    'l' => pCpu.l,
-                    else => blk: {
-                        var retMe: u16 = 0;
-                        if (std.mem.eql(u8, reg, "pc")) {
-                            retMe = pCpu.pc;
-                        } else if (std.mem.eql(u8, reg, "sp")) {
-                            retMe = pCpu.sp;
-                        } else if (std.mem.eql(u8, reg, "bc")) {
-                            retMe = pCpu.b;
-                            retMe = retMe << 8;
-                            retMe += pCpu.c;
-                        } else if (std.mem.eql(u8, reg, "de")) {
-                            retMe = pCpu.d;
-                            retMe = retMe << 8;
-                            retMe += pCpu.e;
-                        } else if (std.mem.eql(u8, reg, "hl")) {
-                            retMe = pCpu.h;
-                            retMe = retMe << 8;
-                            retMe += pCpu.l;
-                        } else if (std.mem.eql(u8, reg, "flags")) {
-                            try stdout.writer().print("z:{b} s:{b} p:{b} cy:{b} ac:{b}\n", .{ pCpu.cc.z, pCpu.cc.s, pCpu.cc.p, pCpu.cc.cy, pCpu.cc.ac });
-                            return;
-                        } else {
+                const regBlk = if (reg.len == 1) regVal: {
+                    const ourReg: u16 = switch (reg[0]) {
+                        'a' => pCpu.a,
+                        'b' => pCpu.b,
+                        'c' => pCpu.c,
+                        'd' => pCpu.d,
+                        'e' => pCpu.e,
+                        'h' => pCpu.h,
+                        'l' => pCpu.l,
+                        else => {
                             try stdout.writer().print("\x1b[0;31mInvalid register '{s}'\x1b[0m\n", .{reg});
                             return;
-                        }
-                        break :blk retMe;
-                    },
+                        },
+                    };
+                    break :regVal ourReg;
+                } else regVal: {
+                    var retMe: u16 = 0;
+                    if (std.mem.eql(u8, reg, "pc")) {
+                        retMe = pCpu.pc;
+                    } else if (std.mem.eql(u8, reg, "sp")) {
+                        retMe = pCpu.sp;
+                    } else if (std.mem.eql(u8, reg, "bc")) {
+                        retMe = pCpu.b;
+                        retMe = retMe << 8;
+                        retMe += pCpu.c;
+                    } else if (std.mem.eql(u8, reg, "de")) {
+                        retMe = pCpu.d;
+                        retMe = retMe << 8;
+                        retMe += pCpu.e;
+                    } else if (std.mem.eql(u8, reg, "hl")) {
+                        retMe = pCpu.h;
+                        retMe = retMe << 8;
+                        retMe += pCpu.l;
+                    } else if (std.mem.eql(u8, reg, "flags")) {
+                        try stdout.writer().print("z:{b} s:{b} p:{b} cy:{b} ac:{b}\n", .{ pCpu.cc.z, pCpu.cc.s, pCpu.cc.p, pCpu.cc.cy, pCpu.cc.ac });
+                        return;
+                    } else {
+                        try stdout.writer().print("\x1b[0;31mInvalid register '{s}'\x1b[0m\n", .{reg});
+                        return;
+                    }
+                    break :regVal retMe;
                 };
-                try stdout.writer().print("{s}: 0x{x:0>2}\n", .{ reg, ourReg });
+                try stdout.writer().print("{s}: 0x{x:0>2}\n", .{ reg, regBlk });
             }
         }
     } else if (std.mem.eql(u8, args[0], "q")) {
