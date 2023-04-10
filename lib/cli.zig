@@ -7,12 +7,10 @@ const stdout = std.io.getStdOut();
 pub fn prompt(alloc: std.mem.Allocator) ![][]const u8 {
     _ = try stdout.writer().write("> ");
     var buf = try stdin.reader().readUntilDelimiterAlloc(alloc, '\n', std.math.maxInt(u32));
-    var cmdIterator = std.mem.split(u8, buf, " ");
+    var cmdIterator = std.mem.tokenize(u8, buf, " ");
 
     var cmdList = std.ArrayList([]const u8).init(alloc);
 
-    const largeCmd = cmdIterator.first();
-    try cmdList.append(largeCmd);
     while (cmdIterator.next()) |arg| {
         try cmdList.append(arg);
     }

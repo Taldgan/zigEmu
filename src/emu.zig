@@ -7,7 +7,49 @@ var stop: bool = false;
 
 fn parseCommands(args: [][]const u8, pCpu: *icpu.CPU) !void {
     if (std.mem.eql(u8, args[0], "r") or std.mem.eql(u8, args[0], "cpu")) {
-        icpu.printCpuStatus(pCpu);
+        if (args.len == 1) {
+            icpu.printCpuStatus(pCpu);
+        } else {
+            for (args[1..]) |reg| {
+                const ourReg: u16 = switch (reg[0]) {
+                    'a' => pCpu.a,
+                    'b' => pCpu.b,
+                    'c' => pCpu.c,
+                    'd' => pCpu.d,
+                    'e' => pCpu.e,
+                    'h' => pCpu.h,
+                    'l' => pCpu.l,
+                    else => blk: {
+                        var retMe: u16 = 0;
+                        if (std.mem.eql(u8, reg, "pc")) {
+                            retMe = pCpu.pc;
+                        } else if (std.mem.eql(u8, reg, "sp")) {
+                            retMe = pCpu.sp;
+                        } else if (std.mem.eql(u8, reg, "bc")) {
+                            retMe = pCpu.b;
+                            retMe = retMe << 8;
+                            retMe += pCpu.c;
+                        } else if (std.mem.eql(u8, reg, "de")) {
+                            retMe = pCpu.d;
+                            retMe = retMe << 8;
+                            retMe += pCpu.e;
+                        } else if (std.mem.eql(u8, reg, "hl")) {
+                            retMe = pCpu.h;
+                            retMe = retMe << 8;
+                            retMe += pCpu.l;
+                        } else if (std.mem.eql(u8, reg, "flags")) {
+                            try stdout.writer().print("z:{b} s:{b} p:{b} cy:{b} ac:{b}\n", .{ pCpu.cc.z, pCpu.cc.s, pCpu.cc.p, pCpu.cc.cy, pCpu.cc.ac });
+                            return;
+                        } else {
+                            try stdout.writer().print("\x1b[0;31mInvalid register '{s}'\x1b[0m\n", .{reg});
+                            return;
+                        }
+                        break :blk retMe;
+                    },
+                };
+                try stdout.writer().print("{s}: 0x{x:0>2}\n", .{ reg, ourReg });
+            }
+        }
     } else if (std.mem.eql(u8, args[0], "q")) {
         stop = true;
     } else if (std.mem.eql(u8, args[0], "u") or std.mem.eql(u8, args[0], "d")) {
@@ -78,13 +120,16 @@ fn parseCommands(args: [][]const u8, pCpu: *icpu.CPU) !void {
             return;
         }
         const cwd = std.fs.cwd();
-        var file = try cwd.openFile(args[1], .{});
+        var file = cwd.openFile(args[1], .{}) catch {
+            try stdout.writer().print("\x1b[0;31mUnable to open file '{s}'\x1b[0m\n", .{args[1]});
+            return;
+        };
         defer file.close();
 
         _ = try file.readAll(pCpu.memory);
-        _ = try stdout.writer().print("\x1b[0;32mMapped file {s} into memory at address 0x{x:0>4}\x1b[0m\n", .{ args[1], 0x0 });
+        _ = try stdout.writer().print("\x1b[0;32mMapped file '{s}' into memory at address 0x{x:0>4}\x1b[0m\n", .{ args[1], 0x0 });
     } else if (std.mem.eql(u8, args[0], "help") or std.mem.eql(u8, args[0], "h")) {
-        _ = try stdout.writer().print("\x1b[0;34mh \x1b[0m- print this menu\n\x1b[0;34mu [pc/addr] \x1b[0m- disassemble 8 instructions at address or pc\n\x1b[0m\x1b[34ms [x] \x1b[0m- emulate and step 'x' instructions\n\x1b[34mload FILE [addr] \x1b[0m- maps file into memory at emulated cpu address 'addr'\n", .{});
+        _ = try stdout.writer().print("\x1b[0;34mh \x1b[0m- print this menu\n\x1b[0;34mu [pc/addr] \x1b[0m- disassemble 8 instructions at address or pc\n\x1b[0m\x1b[34ms [x] \x1b[0m- emulate and step 'x' instructions\n\x1b[34mr [reg/flags] \x1b[0m - print status/registers of cpu\n\x1b[34mload FILE [addr] \x1b[0m- maps file into memory at emulated cpu address 'addr'\n", .{});
     } else {
         _ = try stdout.writer().print("\x1b[0;31mUnknown command '{s}'\x1b[0m\n", .{args[0]});
     }
