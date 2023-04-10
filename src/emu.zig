@@ -83,6 +83,8 @@ fn parseCommands(args: [][]const u8, pCpu: *icpu.CPU) !void {
 
         _ = try file.readAll(pCpu.memory);
         _ = try stdout.writer().print("\x1b[0;32mMapped file {s} into memory at address 0x{x:0>4}\x1b[0m\n", .{ args[1], 0x0 });
+    } else if (std.mem.eql(u8, args[0], "help") or std.mem.eql(u8, args[0], "h")) {
+        _ = try stdout.writer().print("\x1b[0;34mh \x1b[0m- print this menu\n\x1b[0;34mu [pc/addr] \x1b[0m- disassemble 8 instructions at address or pc\n\x1b[0m\x1b[34ms [x] \x1b[0m- emulate and step 'x' instructions\n\x1b[34mload FILE [addr] \x1b[0m- maps file into memory at emulated cpu address 'addr'\n", .{});
     } else {
         _ = try stdout.writer().print("\x1b[0;31mUnknown command '{s}'\x1b[0m\n", .{args[0]});
     }
