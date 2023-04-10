@@ -2,18 +2,6 @@ const std = @import("std");
 const stdin = std.io.getStdIn();
 const stdout = std.io.getStdOut();
 
-///TODO
-pub fn createCommand(comptime T: type) type {
-    return struct {
-        key: []const u8,
-        func: *T,
-    };
-}
-
-///TODO - take in comptime command structs and
-///map them to a hashmap
-pub fn initCmdHashMap() void {}
-
 ///Provide user input prompt.
 ///Array of user inputs are returned
 pub fn prompt(alloc: std.mem.Allocator) ![][]const u8 {

@@ -12,7 +12,7 @@ const CPUFlags = struct {
 };
 
 // Struct representing the CPU
-const CPU = struct {
+pub const CPU = struct {
     a: u8,
     b: u8,
     c: u8,
