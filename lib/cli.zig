@@ -14,5 +14,8 @@ pub fn prompt(alloc: std.mem.Allocator) ![][]const u8 {
     while (cmdIterator.next()) |arg| {
         try cmdList.append(arg);
     }
+    if (cmdList.items.len == 0) {
+        try cmdList.append("");
+    }
     return cmdList.toOwnedSlice();
 }

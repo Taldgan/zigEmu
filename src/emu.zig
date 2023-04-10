@@ -147,7 +147,8 @@ pub fn main() !void {
     }
     var cpu = try icpu.initCpu(&buf, alloc);
 
-    var prevResponse: [][]const u8 = undefined;
+    var safe = [_][]const u8{"r"};
+    var prevResponse: [][]const u8 = &safe;
 
     while (true) {
         var response: [][]const u8 = try icli.prompt(alloc);
