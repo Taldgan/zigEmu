@@ -1,6 +1,24 @@
 const std = @import("std");
 const stdin = std.io.getStdIn();
 const stdout = std.io.getStdOut();
+const CPU = @import("cpu.zig").CPU;
+
+var CmdStringHashMap = undefined;
+
+pub fn initHashMap(cmd_list: []CmdStruct) void {
+    _ = cmd_list;
+}
+
+pub const Callback = union(enum) {
+    with_cpu: *const fn (*CPU, [][]const u8) void,
+    without_cpu: *const fn ([][]const u8) void,
+};
+
+pub const CmdStruct = struct {
+    key: []const u8,
+    help_msg: []const u8,
+    callback: Callback,
+};
 
 ///Provide user input prompt.
 ///Array of user inputs are returned

@@ -3,108 +3,17 @@ const icpu = @import("cpu");
 const icli = @import("cli");
 const stdout = std.io.getStdOut();
 
+fn initCallbacks() icli.CmdStruct {
+    const print_cpu_callback = icli.Callback{ .with_cpu = &icpu.printCpuCmd };
+    const print_cpu_cmd = icli.CmdStruct{ .key = "r", .help_msg = "halp!\n", .callback = print_cpu_callback };
+    return print_cpu_cmd;
+}
+
 var stop: bool = false;
 
 fn parseCommands(args: [][]const u8, pCpu: *icpu.CPU) !void {
-    if (std.mem.eql(u8, args[0], "r") or std.mem.eql(u8, args[0], "cpu")) {
-        if (args.len == 1) {
-            icpu.printCpuStatus(pCpu);
-        } else {
-            for (args[1..]) |reg| {
-                const regBlk = if (reg.len == 1) regVal: {
-                    const ourReg: u16 = switch (reg[0]) {
-                        'a' => pCpu.a,
-                        'b' => pCpu.b,
-                        'c' => pCpu.c,
-                        'd' => pCpu.d,
-                        'e' => pCpu.e,
-                        'h' => pCpu.h,
-                        'l' => pCpu.l,
-                        else => {
-                            try stdout.writer().print("\x1b[0;31mInvalid register '{s}'\x1b[0m\n", .{reg});
-                            return;
-                        },
-                    };
-                    break :regVal ourReg;
-                } else regVal: {
-                    var retMe: u16 = 0;
-                    if (std.mem.eql(u8, reg, "pc")) {
-                        retMe = pCpu.pc;
-                    } else if (std.mem.eql(u8, reg, "sp")) {
-                        retMe = pCpu.sp;
-                    } else if (std.mem.eql(u8, reg, "bc")) {
-                        retMe = pCpu.b;
-                        retMe = retMe << 8;
-                        retMe += pCpu.c;
-                    } else if (std.mem.eql(u8, reg, "de")) {
-                        retMe = pCpu.d;
-                        retMe = retMe << 8;
-                        retMe += pCpu.e;
-                    } else if (std.mem.eql(u8, reg, "hl")) {
-                        retMe = pCpu.h;
-                        retMe = retMe << 8;
-                        retMe += pCpu.l;
-                    } else if (std.mem.eql(u8, reg, "flags")) {
-                        try stdout.writer().print("z:{b} s:{b} p:{b} cy:{b} ac:{b}\n", .{ pCpu.cc.z, pCpu.cc.s, pCpu.cc.p, pCpu.cc.cy, pCpu.cc.ac });
-                        return;
-                    } else {
-                        try stdout.writer().print("\x1b[0;31mInvalid register '{s}'\x1b[0m\n", .{reg});
-                        return;
-                    }
-                    break :regVal retMe;
-                };
-                try stdout.writer().print("{s}: 0x{x:0>2}\n", .{ reg, regBlk });
-            }
-        }
-    } else if (std.mem.eql(u8, args[0], "q")) {
+    if (std.mem.eql(u8, args[0], "q")) {
         stop = true;
-    } else if (std.mem.eql(u8, args[0], "u") or std.mem.eql(u8, args[0], "d")) {
-        //Only way to implement local statics atm
-        const Static = struct {
-            var tmpPc: u16 = 0;
-            var initialized: bool = false;
-        };
-
-        if (!Static.initialized) {
-            Static.tmpPc = pCpu.pc;
-            Static.initialized = true;
-        }
-
-        if (args.len == 1) {
-            var i: u16 = 0;
-            while (i < 8) : (i += 1) {
-                _ = try stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc});
-                Static.tmpPc += icpu.disassemble(pCpu.memory, Static.tmpPc);
-                _ = try stdout.writer().write("\n");
-            }
-        } else {
-            if (std.mem.eql(u8, args[1], "pc")) {
-                Static.tmpPc = pCpu.pc;
-                var i: u16 = 0;
-                while (i < 8) : (i += 1) {
-                    _ = try stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc});
-                    Static.tmpPc += icpu.disassemble(pCpu.memory, Static.tmpPc);
-                    _ = try stdout.writer().write("\n");
-                }
-            } else {
-                const addr: u16 = std.fmt.parseInt(u16, args[1], 0) catch blk: {
-                    try stdout.writer().print("\x1b[0;31mInvalid address: '{s}'\x1b[0m\n", .{args[1]});
-                    break :blk 0;
-                };
-                if (addr < 0 or addr > pCpu.memory.len) {
-                    try stdout.writer().print("\x1b[0;31mInvalid address: '{s}'\x1b[0m\n", .{args[1]});
-                    return;
-                }
-                Static.tmpPc = addr;
-
-                var i: u16 = 0;
-                while (i < 8) : (i += 1) {
-                    _ = try stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc});
-                    Static.tmpPc += icpu.disassemble(pCpu.memory, Static.tmpPc);
-                    _ = try stdout.writer().write("\n");
-                }
-            }
-        }
     } else if (std.mem.eql(u8, args[0], "s")) {
         if (args.len == 1) {
             icpu.emulate(pCpu);
@@ -153,8 +62,18 @@ pub fn main() !void {
     }
     var cpu = try icpu.initCpu(&buf, alloc);
 
+    var dummy_args1: [2][]const u8 = [_][]const u8{ "ab", "c" };
+    var dummy_args2: [][]const u8 = &dummy_args1;
+
     var safe = [_][]const u8{"r"};
     var prevResponse: [][]const u8 = &safe;
+    const callMe = initCallbacks();
+    switch (callMe.callback) {
+        .with_cpu => {
+            callMe.callback.with_cpu(cpu, dummy_args2);
+        },
+        .without_cpu => {},
+    }
 
     while (true) {
         var response: [][]const u8 = try icli.prompt(alloc);

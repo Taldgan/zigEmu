@@ -1,4 +1,5 @@
 const std = @import("std");
+const stdout = std.io.getStdOut();
 const print = std.debug.print;
 
 // Struct representing flags register state
@@ -25,6 +26,107 @@ pub const CPU = struct {
     cc: CPUFlags,
     memory: []u8,
 };
+
+pub fn disassembleCmd(pCpu: *CPU, args: [][]const u8) void {
+    //Only way to implement local statics atm
+    const Static = struct {
+        var tmpPc: u16 = 0;
+        var initialized: bool = false;
+    };
+
+    if (!Static.initialized) {
+        Static.tmpPc = pCpu.pc;
+        Static.initialized = true;
+    }
+
+    if (args.len == 1) {
+        var i: u16 = 0;
+        while (i < 8) : (i += 1) {
+            _ = try stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc});
+            Static.tmpPc += disassemble(pCpu.memory, Static.tmpPc);
+            _ = try stdout.writer().write("\n");
+        }
+    } else {
+        if (std.mem.eql(u8, args[1], "pc")) {
+            Static.tmpPc = pCpu.pc;
+            var i: u16 = 0;
+            while (i < 8) : (i += 1) {
+                _ = try stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc});
+                Static.tmpPc += disassemble(pCpu.memory, Static.tmpPc);
+                _ = try stdout.writer().write("\n");
+            }
+        } else {
+            const addr: u16 = std.fmt.parseInt(u16, args[1], 0) catch blk: {
+                try stdout.writer().print("\x1b[0;31mInvalid address: '{s}'\x1b[0m\n", .{args[1]});
+                break :blk 0;
+            };
+            if (addr < 0 or addr > pCpu.memory.len) {
+                try stdout.writer().print("\x1b[0;31mInvalid address: '{s}'\x1b[0m\n", .{args[1]});
+                return;
+            }
+            Static.tmpPc = addr;
+
+            var i: u16 = 0;
+            while (i < 8) : (i += 1) {
+                _ = try stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc});
+                Static.tmpPc += disassemble(pCpu.memory, Static.tmpPc);
+                _ = try stdout.writer().write("\n");
+            }
+        }
+    }
+}
+
+pub fn printCpuCmd(pCpu: *CPU, args: [][]const u8) void {
+    if (args.len == 1) {
+        printCpuStatus(pCpu);
+    } else {
+        for (args[1..]) |reg| {
+            const regBlk = if (reg.len == 1) regVal: {
+                const ourReg: u16 = switch (reg[0]) {
+                    'a' => pCpu.a,
+                    'b' => pCpu.b,
+                    'c' => pCpu.c,
+                    'd' => pCpu.d,
+                    'e' => pCpu.e,
+                    'h' => pCpu.h,
+                    'l' => pCpu.l,
+                    else => {
+                        stdout.writer().print("\x1b[0;31mInvalid register '{s}'\x1b[0m\n", .{reg}) catch {};
+                        return;
+                    },
+                };
+                break :regVal ourReg;
+            } else regVal: {
+                var retMe: u16 = 0;
+                if (std.mem.eql(u8, reg, "pc")) {
+                    retMe = pCpu.pc;
+                } else if (std.mem.eql(u8, reg, "sp")) {
+                    retMe = pCpu.sp;
+                } else if (std.mem.eql(u8, reg, "bc")) {
+                    retMe = pCpu.b;
+                    retMe = retMe << 8;
+                    retMe += pCpu.c;
+                } else if (std.mem.eql(u8, reg, "de")) {
+                    retMe = pCpu.d;
+                    retMe = retMe << 8;
+                    retMe += pCpu.e;
+                } else if (std.mem.eql(u8, reg, "hl")) {
+                    retMe = pCpu.h;
+                    retMe = retMe << 8;
+                    retMe += pCpu.l;
+                } else if (std.mem.eql(u8, reg, "flags")) {
+                    stdout.writer().print("z:{b} s:{b} p:{b} cy:{b} ac:{b}\n", .{ pCpu.cc.z, pCpu.cc.s, pCpu.cc.p, pCpu.cc.cy, pCpu.cc.ac }) catch {};
+                    return;
+                } else {
+                    stdout.writer().print("\x1b[0;31mInvalid register '{s}'\x1b[0m\n", .{reg}) catch {};
+                    return;
+                }
+                break :regVal retMe;
+            };
+            stdout.writer().print("{s}: 0x{x:0>2}\n", .{ reg, regBlk }) catch {};
+        }
+    }
+}
 
 pub fn parity(result: u16) u1 {
     if (result % 2 == 0) {
