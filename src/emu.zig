@@ -12,6 +12,11 @@ fn initCallbacks(alloc: std.mem.Allocator) ![]icli.CmdStruct {
         .callback = icli.Callback{ .with_cpu = &icpu.printCpuCmd } });
 
     try cmd_list.append(icli.CmdStruct{ 
+        .key = "d", 
+        .help_msg = "\x1b[34md [addr] \x1b[0m - hexdump of address\n", 
+        .callback = icli.Callback{ .with_cpu = &icpu.memdumpCmd } });
+
+    try cmd_list.append(icli.CmdStruct{ 
         .key = "s", 
         .help_msg = "\x1b[34ms [x] \x1b[0m- emulate and step 'x' instructions\n", 
         .callback =  icli.Callback { .with_cpu = &icpu.stepCmd} });
