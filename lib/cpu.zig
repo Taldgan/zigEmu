@@ -2,6 +2,8 @@ const std = @import("std");
 const stdout = std.io.getStdOut();
 const print = std.debug.print;
 
+pub const mem_size = 0x4001;
+
 // Struct representing flags register state
 const CPUFlags = struct {
     z: u1 = 1,
@@ -27,6 +29,64 @@ pub const CPU = struct {
     memory: []u8,
 };
 
+pub fn loadCmd(pCpu: *CPU, args: [][]const u8) void {
+    var mapLoc: u16 = 0;
+    if (args.len < 2) {
+        return;
+    }
+    if (args.len > 2) {
+        mapLoc = std.fmt.parseInt(u16, args[2], 0) catch blk: {
+            _ = stdout.writer().print("\x1b[0;31mInvalid number of steps: '{s}'\x1b[0m\n", .{args[1]}) catch {};
+            break :blk 0;
+        };
+    }
+    const cwd = std.fs.cwd();
+    var file = cwd.openFile(args[1], .{}) catch {
+        stdout.writer().print("\x1b[0;31mUnable to open file '{s}'\x1b[0m\n", .{args[1]}) catch {};
+        return;
+    };
+    defer file.close();
+    var fileBuf: [mem_size]u8 = undefined;
+
+    const bytesRead = file.readAll(&fileBuf) catch {
+        stdout.writer().print("\x1b[0;31mUnable to read file '{s}'\x1b[0m\n", .{args[1]}) catch {};
+        return;
+    };
+
+    if (bytesRead > mem_size) {
+        stdout.writer().print("\x1b[0;31mUnable to read file '{s}' into memory  - file too large\x1b[0m\n", .{args[1]}) catch {};
+        return;
+    } else if (bytesRead + mapLoc > mem_size) {
+        stdout.writer().print("\x1b[0;31mUnable to read file '{s}' into memory  - file too large at offset 0x{x:0>4}\x1b[0m\n", .{ args[1], mapLoc }) catch {};
+        return;
+    }
+
+    //Copy bytes into cpu memory
+    for (&fileBuf) |byte, i| {
+        pCpu.memory[i] = byte;
+    }
+
+    _ = stdout.writer().print("\x1b[0;32mMapped file '{s}' into memory at address 0x{x:0>4}\x1b[0m\n", .{ args[1], mapLoc }) catch {};
+}
+
+pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
+    if (args.len == 1) {
+        emulate(pCpu);
+    } else {
+        const steps: u32 = std.fmt.parseInt(u32, args[1], 0) catch blk: {
+            _ = stdout.writer().print("\x1b[0;31mInvalid number of steps: '{s}'\x1b[0m\n", .{args[1]}) catch {};
+            break :blk 0;
+        };
+        var i: u32 = 0;
+        while (i < steps) : (i += 1) {
+            emulate(pCpu);
+        }
+    }
+    stdout.writer().print("0x{x:0>2}: ", .{pCpu.pc}) catch {};
+    _ = disassemble(pCpu.memory, pCpu.pc);
+    _ = stdout.writer().write("\n") catch {};
+}
+
 pub fn disassembleCmd(pCpu: *CPU, args: [][]const u8) void {
     //Only way to implement local statics atm
     const Static = struct {
@@ -42,35 +102,35 @@ pub fn disassembleCmd(pCpu: *CPU, args: [][]const u8) void {
     if (args.len == 1) {
         var i: u16 = 0;
         while (i < 8) : (i += 1) {
-            _ = try stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc});
+            _ = stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc}) catch {};
             Static.tmpPc += disassemble(pCpu.memory, Static.tmpPc);
-            _ = try stdout.writer().write("\n");
+            _ = stdout.writer().write("\n") catch {};
         }
     } else {
         if (std.mem.eql(u8, args[1], "pc")) {
             Static.tmpPc = pCpu.pc;
             var i: u16 = 0;
             while (i < 8) : (i += 1) {
-                _ = try stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc});
+                _ = stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc}) catch {};
                 Static.tmpPc += disassemble(pCpu.memory, Static.tmpPc);
-                _ = try stdout.writer().write("\n");
+                _ = stdout.writer().write("\n") catch {};
             }
         } else {
             const addr: u16 = std.fmt.parseInt(u16, args[1], 0) catch blk: {
-                try stdout.writer().print("\x1b[0;31mInvalid address: '{s}'\x1b[0m\n", .{args[1]});
+                stdout.writer().print("\x1b[0;31mInvalid address: '{s}'\x1b[0m\n", .{args[1]}) catch {};
                 break :blk 0;
             };
             if (addr < 0 or addr > pCpu.memory.len) {
-                try stdout.writer().print("\x1b[0;31mInvalid address: '{s}'\x1b[0m\n", .{args[1]});
+                stdout.writer().print("\x1b[0;31mInvalid address: '{s}'\x1b[0m\n", .{args[1]}) catch {};
                 return;
             }
             Static.tmpPc = addr;
 
             var i: u16 = 0;
             while (i < 8) : (i += 1) {
-                _ = try stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc});
+                _ = stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc}) catch {};
                 Static.tmpPc += disassemble(pCpu.memory, Static.tmpPc);
-                _ = try stdout.writer().write("\n");
+                _ = stdout.writer().write("\n") catch {};
             }
         }
     }
@@ -3420,10 +3480,6 @@ pub fn disassembleWholeProg(progBuf: []u8) void {
         i += opSize;
     }
 }
-
-//pub fn initMemory(usize , alloc: std.mem.Allocator) ![]u8{
-//
-//}
 
 pub fn initCpu(mem: []u8, alloc: std.mem.Allocator) !*CPU {
     // cflags all set to defaults above, no need to initialize

@@ -3,10 +3,16 @@ const stdin = std.io.getStdIn();
 const stdout = std.io.getStdOut();
 const CPU = @import("cpu.zig").CPU;
 
-var CmdStringHashMap = undefined;
+var cmd_map: std.StringHashMap(CmdStruct) = undefined;
 
-pub fn initHashMap(cmd_list: []CmdStruct) void {
-    _ = cmd_list;
+pub fn initHashMap(alloc: std.mem.Allocator, cmd_listp: *[]CmdStruct) !void {
+    var cmd_hash_map: std.StringHashMap(CmdStruct) = std.StringHashMap(CmdStruct).init(alloc);
+    var cmd_list: []CmdStruct = cmd_listp.*;
+
+    for (cmd_list) |cmd| {
+        try cmd_hash_map.put(cmd.key, cmd);
+    }
+    cmd_map = cmd_hash_map;
 }
 
 pub const Callback = union(enum) {
@@ -19,6 +25,40 @@ pub const CmdStruct = struct {
     help_msg: []const u8,
     callback: Callback,
 };
+
+pub fn parseCommands(args: [][]const u8, pCpu: *CPU) !void {
+    if (cmd_map.get(args[0])) |cmd| {
+        switch (cmd.callback) {
+            .with_cpu => {
+                cmd.callback.with_cpu(pCpu, args);
+            },
+            .without_cpu => {
+                cmd.callback.without_cpu(args);
+            },
+        }
+    } else {
+        try stdout.writer().print("Invalid command '{s}'\n", .{args[0]});
+    }
+}
+
+///Iterate through global CmdStringHashMap, printing help options
+///Alternatively if args contain a command or list of commands, print
+///the relevant help options.
+pub fn helpCmd(args: [][]const u8) void {
+    if (args.len == 1) {
+        var mapIterator = cmd_map.valueIterator();
+        while (mapIterator.next()) |cmd| {
+            _ = stdout.writer().print("{s}", .{cmd.help_msg}) catch {};
+        }
+    } else {
+        for (args[1..]) |cmd| {
+            var opt = cmd_map.get(cmd);
+            if (opt) |cmd_exists| {
+                _ = stdout.writer().print("{s}", .{cmd_exists.help_msg}) catch {};
+            }
+        }
+    }
+}
 
 ///Provide user input prompt.
 ///Array of user inputs are returned
