@@ -14,6 +14,7 @@ pub fn build(b: *std.build.Builder) void {
     const exe = b.addExecutable("zigEmu", "src/emu.zig");
     exe.addPackagePath("cpu", "lib/cpu.zig");
     exe.addPackagePath("cli", "lib/cli.zig");
+    exe.linkLibC();
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.install();

@@ -2,6 +2,13 @@ const std = @import("std");
 const stdin = std.io.getStdIn();
 const stdout = std.io.getStdOut();
 const CPU = @import("cpu.zig").CPU;
+const c = @cImport({
+    // See https://github.com/ziglang/zig/issues/515
+    @cDefine("_NO_CRT_STDIO_INLINE", "1");
+    @cInclude("stdio.h");
+    @cInclude("termios.h");
+    @cInclude("unistd.h");
+});
 
 var cmd_map: std.StringHashMap(CmdStruct) = undefined;
 
@@ -58,6 +65,17 @@ pub fn helpCmd(args: [][]const u8) void {
             }
         }
     }
+}
+
+pub fn disableLineBuffering() void {
+    const my_termios_type = c.termios;
+    var my_termios: my_termios_type = undefined;
+    _ = c.tcgetattr(0, &my_termios);
+    my_termios.c_lflag &= @as(c_uint, ~@as(c_uint, 2));
+    my_termios.c_lflag |= c.ECHO;
+    my_termios.c_cc[c.VMIN] = 0;
+    my_termios.c_cc[c.VTIME] = 0;
+    _ = c.tcsetattr(0, c.TCSANOW, &my_termios);
 }
 
 ///Provide user input prompt.
