@@ -65,16 +65,28 @@ pub fn helpCmd(args: [][]const u8) void {
     if (args.len == 1) {
         var mapIterator = cmd_map.valueIterator();
         while (mapIterator.next()) |cmd| {
+            if(cmd.help_msg.args.len != 0){
             _ = stdout.writer().print(colors.BLUE ++ "{s} " ++ colors.YELLOW ++ "{s} " ++ colors.DEFAULT ++ "- {s}\n", 
                 .{cmd.help_msg.cmd, cmd.help_msg.args, cmd.help_msg.desc}) catch {};
+            }
+            else{ 
+            _ = stdout.writer().print(colors.BLUE ++ "{s} " ++ colors.DEFAULT ++ "- {s}\n", 
+                .{cmd.help_msg.cmd, cmd.help_msg.desc}) catch {};
+            }
         }
 
     } else {
         for (args[1..]) |cmd| {
             var opt = cmd_map.get(cmd);
             if (opt) |cmd_exists| {
-            _ = stdout.writer().print(colors.BLUE ++ "{s}" ++ colors.YELLOW ++ "{s} " ++ colors.DEFAULT ++ "- {s}\n", 
-                .{cmd_exists.help_msg.cmd, cmd_exists.help_msg.args, cmd_exists.help_msg.desc}) catch {};
+                if(cmd_exists.help_msg.args.len != 0){
+                _ = stdout.writer().print(colors.BLUE ++ "{s} " ++ colors.YELLOW ++ "{s} " ++ colors.DEFAULT ++ "- {s}\n", 
+                    .{cmd_exists.help_msg.cmd, cmd_exists.help_msg.args, cmd_exists.help_msg.desc}) catch {};
+                }
+                else{ 
+                _ = stdout.writer().print(colors.BLUE ++ "{s} " ++ colors.DEFAULT ++ "- {s}\n", 
+                    .{cmd_exists.help_msg.cmd, cmd_exists.help_msg.desc}) catch {};
+                }
             }
         }
     }
