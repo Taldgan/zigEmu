@@ -1,3 +1,4 @@
+const colors = @import("colors.zig");
 const std = @import("std");
 const stdin = std.io.getStdIn();
 const stdout = std.io.getStdOut();
@@ -11,16 +12,7 @@ const c = @cImport({
 });
 
 var cmd_map: std.StringHashMap(CmdStruct) = undefined;
-
-pub fn initHashMap(alloc: std.mem.Allocator, cmd_listp: *[]CmdStruct) !void {
-    var cmd_hash_map: std.StringHashMap(CmdStruct) = std.StringHashMap(CmdStruct).init(alloc);
-    var cmd_list: []CmdStruct = cmd_listp.*;
-
-    for (cmd_list) |cmd| {
-        try cmd_hash_map.put(cmd.key, cmd);
-    }
-    cmd_map = cmd_hash_map;
-}
+var cmd_history: []const u8 = undefined;
 
 pub const Callback = union(enum) {
     with_cpu: *const fn (*CPU, [][]const u8) void,
@@ -28,10 +20,28 @@ pub const Callback = union(enum) {
 };
 
 pub const CmdStruct = struct {
-    key: []const u8,
-    help_msg: []const u8,
+    keys: [][]const u8,
+    help_msg: HelpMsg,
     callback: Callback,
 };
+
+pub const HelpMsg = struct {
+    cmd: []const u8,    
+    args: []const u8,    
+    desc: []const u8,    
+};
+
+pub fn initHashMap(alloc: std.mem.Allocator, cmd_listp: *[]CmdStruct) !void {
+    var cmd_hash_map: std.StringHashMap(CmdStruct) = std.StringHashMap(CmdStruct).init(alloc);
+    var cmd_list: []CmdStruct = cmd_listp.*;
+
+    for (cmd_list) |cmd| {
+        for(cmd.keys) |key|{
+            try cmd_hash_map.put(key, cmd);
+        }
+    }
+    cmd_map = cmd_hash_map;
+}
 
 pub fn parseCommands(args: [][]const u8, pCpu: *CPU) !void {
     if (cmd_map.get(args[0])) |cmd| {
@@ -55,13 +65,16 @@ pub fn helpCmd(args: [][]const u8) void {
     if (args.len == 1) {
         var mapIterator = cmd_map.valueIterator();
         while (mapIterator.next()) |cmd| {
-            _ = stdout.writer().print("{s}", .{cmd.help_msg}) catch {};
+            _ = stdout.writer().print(colors.BLUE ++ "{s} " ++ colors.YELLOW ++ "{s} " ++ colors.DEFAULT ++ "- {s}\n", 
+                .{cmd.help_msg.cmd, cmd.help_msg.args, cmd.help_msg.desc}) catch {};
         }
+
     } else {
         for (args[1..]) |cmd| {
             var opt = cmd_map.get(cmd);
             if (opt) |cmd_exists| {
-                _ = stdout.writer().print("{s}", .{cmd_exists.help_msg}) catch {};
+            _ = stdout.writer().print(colors.BLUE ++ "{s}" ++ colors.YELLOW ++ "{s} " ++ colors.DEFAULT ++ "- {s}\n", 
+                .{cmd_exists.help_msg.cmd, cmd_exists.help_msg.args, cmd_exists.help_msg.desc}) catch {};
             }
         }
     }

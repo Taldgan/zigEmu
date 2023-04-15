@@ -5,40 +5,86 @@ const stdout = std.io.getStdOut();
 
 fn initCallbacks(alloc: std.mem.Allocator) ![]icli.CmdStruct {
     var cmd_list = std.ArrayList(icli.CmdStruct).init(alloc);
+    var key_list = std.ArrayList([]const u8).init(alloc);
 
+    try key_list.append("r");
+    try key_list.append("cpu");
     try cmd_list.append(icli.CmdStruct{ 
-        .key = "r", 
-        .help_msg = "\x1b[34mr [reg/flags] \x1b[0m - print status/registers of cpu\n", 
+        .keys = key_list.toOwnedSlice(), 
+        .help_msg = icli.HelpMsg {
+            .cmd = "cpu",
+            .args = "[reg/flags]",
+            .desc = "print registers of cpu",
+        },
         .callback = icli.Callback{ .with_cpu = &icpu.printCpuCmd } });
 
+    try key_list.append("x");
+    try key_list.append("hexdump");
     try cmd_list.append(icli.CmdStruct{ 
-        .key = "d", 
-        .help_msg = "\x1b[34md [addr] \x1b[0m - hexdump of address\n", 
+        .keys = key_list.toOwnedSlice(),
+        .help_msg = icli.HelpMsg {
+            .cmd = "hexdump",
+            .args = "[addr]",
+            .desc = "hexdump of address",
+        },
         .callback = icli.Callback{ .with_cpu = &icpu.memdumpCmd } });
 
+    try key_list.append("s");
+    try key_list.append("step");
     try cmd_list.append(icli.CmdStruct{ 
-        .key = "s", 
-        .help_msg = "\x1b[34ms [x] \x1b[0m- emulate and step 'x' instructions\n", 
+        .keys = key_list.toOwnedSlice(),
+        .help_msg = icli.HelpMsg {
+            .cmd = "step",
+            .args = "[x]",
+            .desc = "emulate and step 'x' instructions",
+        },
         .callback =  icli.Callback { .with_cpu = &icpu.stepCmd} });
 
+    try key_list.append("d");
+    try key_list.append("disas");
+    try key_list.append("disassemble");
     try cmd_list.append(icli.CmdStruct{ 
-        .key = "u", 
-        .help_msg = "\x1b[0;34mu [pc/addr] [numInst] \x1b[0m- disassemble 8 instructions at address or pc\n", 
+        .keys = key_list.toOwnedSlice(),
+        .help_msg = icli.HelpMsg {
+            .cmd = "disassemble",
+            .args = "[pc/addr] [numInst]",
+            .desc = "disassemble 8 (or 'x') instructions at address or pc",
+        },
         .callback =  icli.Callback{ .with_cpu = &icpu.disassembleCmd  } });
 
+    try key_list.append("l");
+    try key_list.append("load");
     try cmd_list.append(icli.CmdStruct{ 
-        .key = "load", 
-        .help_msg = "\x1b[34mload FILE [addr] \x1b[0m- maps file into memory at emulated cpu address 'addr'\n", 
+        .keys = key_list.toOwnedSlice(),
+        .help_msg = icli.HelpMsg {
+            .cmd = "load",
+            .args = "[addr]",
+            .desc = "maps file into memory at emulated cpu address 'addr'",
+        },
         .callback =  icli.Callback{ .with_cpu = &icpu.loadCmd } });
 
+    try key_list.append("q");
+    try key_list.append("quit");
+    try key_list.append("exit");
     try cmd_list.append(icli.CmdStruct{ 
-        .key = "q", 
-        .help_msg = "\x1b[34mq \x1b[0m- quit\n", 
+        .keys = key_list.toOwnedSlice(),
+        .help_msg = icli.HelpMsg {
+            .cmd = "quit",
+            .args = "",
+            .desc = "quit",
+        },
         .callback = icli.Callback {  .without_cpu = &quit  } });
 
+    try key_list.append("h");
+    try key_list.append("?");
+    try key_list.append("help");
     try cmd_list.append(icli.CmdStruct{ 
-        .key = "h", 
-        .help_msg = "\x1b[34mh [cmd] \x1b[0m- print this menu, or help of a specific command\n", 
+        .keys = key_list.toOwnedSlice(),
+        .help_msg = icli.HelpMsg {
+            .cmd = "help",
+            .args = "[cmd1 cmd2 cmd3...]",
+            .desc = "print this menu, or help of a specific command",
+        },
         .callback = icli.Callback { .without_cpu = &icli.helpCmd } });
 
     return cmd_list.toOwnedSlice();
@@ -56,6 +102,9 @@ pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const alloc = arena.allocator();
     defer arena.deinit();
+
+    //Necessary to identify arrow inputs
+    //icli.disableLineBuffering();
 
     var buf: [icpu.mem_size]u8 = undefined;
     for (buf) |_, i| {

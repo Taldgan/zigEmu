@@ -1,3 +1,4 @@
+const colors = @import("colors.zig");
 const std = @import("std");
 const stdout = std.io.getStdOut();
 const print = std.debug.print;
@@ -3474,24 +3475,23 @@ pub fn memdumpCmd(pCpu: *CPU, args: [][]const u8) void {
             break :blk 0;
         };
         hexdump(pCpu.memory, addr);
-    }
-    else {
-            _ = stdout.writer().print("\x1b[0;31mAddress required\x1b[0m\n", .{}) catch {};
+    } else {
+        _ = stdout.writer().print("\x1b[0;31mAddress required\x1b[0m\n", .{}) catch {};
     }
 }
 
 fn isPrintable(char: u8) u8 {
-    if(char < 0x20 or char > 0x7e) {
+    if (char < 0x20 or char > 0x7e) {
         return '.';
     }
     return char;
 }
 
 pub fn hexdump(buf: []u8, pc: u16) void {
-    for(buf[pc..pc+48]) |val, i| {
-        if(i % 8 == 0 and i != 0) {
+    for (buf[pc .. pc + 48]) |val, i| {
+        if (i % 8 == 0 and i != 0) {
             _ = stdout.writer().write("| ") catch {};
-            for(buf[pc+i..pc+i+8]) |valc| {
+            for (buf[pc + i .. pc + i + 8]) |valc| {
                 _ = stdout.writer().print("{c} ", .{isPrintable(valc)}) catch {};
             }
             _ = stdout.writer().write("|\n") catch {};
@@ -3499,7 +3499,7 @@ pub fn hexdump(buf: []u8, pc: u16) void {
         _ = stdout.writer().print("{x:0>2} ", .{val}) catch {};
     }
     _ = stdout.writer().write("| ") catch {};
-    for(buf[pc+40..pc+48]) |valc| {
+    for (buf[pc + 40 .. pc + 48]) |valc| {
         _ = stdout.writer().print("{c} ", .{isPrintable(valc)}) catch {};
     }
     _ = stdout.writer().write("|\n") catch {};
