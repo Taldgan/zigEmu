@@ -60,7 +60,7 @@ pub fn parseCommands(args: [][]const u8, pCpu: *CPU) !void {
             },
         }
     } else {
-        try stdout.writer().print("Invalid command '{s}'\n", .{args[0]});
+        try stdout.writer().print(colors.RED ++ "Invalid command '{s}'" ++ colors.DEFAULT ++ "\n", .{args[0]});
     }
 }
 
@@ -143,7 +143,7 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
     var read_in: u8 = undefined; 
     var line = std.ArrayList(u8).init(alloc);
     defer line.deinit();
-    _ = try stdout_writer.write("> ");
+    _ = try stdout_writer.write("zig@emu > ");
     while(true) {
         read_in = stdin_reader.readByte() catch 0;
         if(read_in == 0) { continue; }
@@ -159,7 +159,7 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
             },
             //Clear screen
             '\x0c' => {
-                _ = try stdout_writer.print("\x1bc\r> {s}", .{line.items});
+                _ = try stdout_writer.print("\x1bc\rzig@emu > {s}", .{line.items});
                 continue;
             },
             //arrows!
