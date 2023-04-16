@@ -137,6 +137,60 @@ pub fn disableLineBuffering() void {
     _ = c.tcsetattr(0, c.TCSANOW, &my_termios);
 }
 
+pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
+    var stdin_reader = stdin.reader();
+    var stdout_writer = stdout.writer();
+    var read_in: u8 = undefined; 
+    var line = std.ArrayList(u8).init(alloc);
+    defer line.deinit();
+    _ = try stdout_writer.write("> ");
+    while(true) {
+        read_in = stdin_reader.readByte() catch 0;
+        if(read_in == 0) { continue; }
+        switch(read_in){
+            //Backspace
+            '\x7f' => {
+                _ = try stdout_writer.write("\x1b[D\x1b[K\x1b[D\x1b[K\x1b[D\x1b[K");
+                if(line.items.len > 0)
+                    _ = line.pop();
+            },
+            //CLS
+            '\x0c' => {
+                _ = try stdout_writer.write("\x1bc\r> ");
+                continue;
+            },
+            //arrows!
+            '\x1b' => {
+                _ = try stdin_reader.readByte();
+                read_in = try stdin_reader.readByte();
+                try line.appendSlice(switch (read_in) {
+                    'A' => "up",
+                    'B' => "down",
+                    'C' => "right",
+                    'D' => "left",
+                    else => "\x00",
+                });
+                try stdout.writer().print("\rarrow type: {s}\n> ", .{line.toOwnedSlice()});
+                continue;
+            },
+            '\n' => {
+                var cmd_iterator = std.mem.tokenize(u8, line.toOwnedSlice(), " ");
+                var cmd_list = std.ArrayList([] const u8).init(alloc);
+                defer cmd_list.deinit();
+                while (cmd_iterator.next()) |arg| {
+                    try cmd_list.append(arg);
+                }
+                if (cmd_list.items.len == 0) {
+                    try cmd_list.append("");
+                }
+                return cmd_list.toOwnedSlice();
+            },
+            else => {try line.append(read_in);},
+
+        }
+    }
+}
+
 ///Provide user input prompt.
 ///Array of user inputs are returned
 pub fn prompt(alloc: std.mem.Allocator) ![][]const u8 {

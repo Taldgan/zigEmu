@@ -33,32 +33,33 @@ pub const CPU = struct {
 pub fn loadCmd(pCpu: *CPU, args: [][]const u8) void {
     var mapLoc: u16 = 0;
     if (args.len < 2) {
+        _ = stdout.writer().print(colors.RED ++ "Need a file for load" ++ colors.DEFAULT ++ "\n", .{}) catch {};
         return;
     }
     if (args.len > 2) {
         mapLoc = std.fmt.parseInt(u16, args[2], 0) catch blk: {
-            _ = stdout.writer().print("\x1b[0;31mInvalid number of steps: '{s}'\x1b[0m\n", .{args[1]}) catch {};
+            _ = stdout.writer().print(colors.RED ++ "Invalid number of steps: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
             break :blk 0;
         };
     }
     const cwd = std.fs.cwd();
     var file = cwd.openFile(args[1], .{}) catch {
-        stdout.writer().print("\x1b[0;31mUnable to open file '{s}'\x1b[0m\n", .{args[1]}) catch {};
+        stdout.writer().print(colors.RED ++ "Unable to open file '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
         return;
     };
     defer file.close();
     var fileBuf: [mem_size]u8 = undefined;
 
     const bytesRead = file.readAll(&fileBuf) catch {
-        stdout.writer().print("\x1b[0;31mUnable to read file '{s}'\x1b[0m\n", .{args[1]}) catch {};
+        stdout.writer().print(colors.RED ++ "Unable to read file '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
         return;
     };
 
     if (bytesRead > mem_size) {
-        stdout.writer().print("\x1b[0;31mUnable to read file '{s}' into memory  - file too large\x1b[0m\n", .{args[1]}) catch {};
+        stdout.writer().print(colors.RED ++ "Unable to read file '{s}' into memory  - file too large" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
         return;
     } else if (bytesRead + mapLoc > mem_size) {
-        stdout.writer().print("\x1b[0;31mUnable to read file '{s}' into memory  - file too large at offset 0x{x:0>4}\x1b[0m\n", .{ args[1], mapLoc }) catch {};
+        stdout.writer().print(colors.RED ++ "Unable to read file '{s}' into memory  - file too large at offset 0x{x:0>4}" ++ colors.DEFAULT ++ "\n", .{ args[1], mapLoc }) catch {};
         return;
     }
 
@@ -67,7 +68,7 @@ pub fn loadCmd(pCpu: *CPU, args: [][]const u8) void {
         pCpu.memory[i] = byte;
     }
 
-    _ = stdout.writer().print("\x1b[0;32mMapped file '{s}' into memory at address 0x{x:0>4}\x1b[0m\n", .{ args[1], mapLoc }) catch {};
+    _ = stdout.writer().print("\x1b[0;32mMapped file '{s}' into memory at address 0x{x:0>4}" ++ colors.DEFAULT ++ "\n", .{ args[1], mapLoc }) catch {};
 }
 
 pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
@@ -75,7 +76,7 @@ pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
         emulate(pCpu);
     } else {
         const steps: u32 = std.fmt.parseInt(u32, args[1], 0) catch blk: {
-            _ = stdout.writer().print("\x1b[0;31mInvalid number of steps: '{s}'\x1b[0m\n", .{args[1]}) catch {};
+            _ = stdout.writer().print(colors.RED ++ "Invalid number of steps: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
             break :blk 0;
         };
         var i: u32 = 0;
@@ -118,11 +119,11 @@ pub fn disassembleCmd(pCpu: *CPU, args: [][]const u8) void {
             }
         } else {
             const addr: u16 = std.fmt.parseInt(u16, args[1], 0) catch blk: {
-                stdout.writer().print("\x1b[0;31mInvalid address: '{s}'\x1b[0m\n", .{args[1]}) catch {};
+                stdout.writer().print(colors.RED ++ "Invalid address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
                 break :blk 0;
             };
             if (addr < 0 or addr > pCpu.memory.len) {
-                stdout.writer().print("\x1b[0;31mInvalid address: '{s}'\x1b[0m\n", .{args[1]}) catch {};
+                stdout.writer().print(colors.RED ++ "Invalid address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
                 return;
             }
             Static.tmpPc = addr;
@@ -152,7 +153,7 @@ pub fn printCpuCmd(pCpu: *CPU, args: [][]const u8) void {
                     'h' => pCpu.h,
                     'l' => pCpu.l,
                     else => {
-                        stdout.writer().print("\x1b[0;31mInvalid register '{s}'\x1b[0m\n", .{reg}) catch {};
+                        stdout.writer().print(colors.RED ++ "Invalid register '{s}'" ++ colors.DEFAULT ++ "\n", .{reg}) catch {};
                         return;
                     },
                 };
@@ -179,7 +180,7 @@ pub fn printCpuCmd(pCpu: *CPU, args: [][]const u8) void {
                     stdout.writer().print("z:{b} s:{b} p:{b} cy:{b} ac:{b}\n", .{ pCpu.cc.z, pCpu.cc.s, pCpu.cc.p, pCpu.cc.cy, pCpu.cc.ac }) catch {};
                     return;
                 } else {
-                    stdout.writer().print("\x1b[0;31mInvalid register '{s}'\x1b[0m\n", .{reg}) catch {};
+                    stdout.writer().print(colors.RED ++ "Invalid register '{s}'" ++ colors.DEFAULT ++ "\n", .{reg}) catch {};
                     return;
                 }
                 break :regVal retMe;
@@ -2481,987 +2482,987 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
     }
     switch (op) {
         0x00 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     NOP", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     NOP", .{op});
             return 1;
         },
         0x01 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m LXI B, 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " LXI B, 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0x02 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     STAX B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     STAX B", .{op});
             return 1;
         },
         0x03 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INX B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INX B", .{op});
             return 1;
         },
         0x04 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INR B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INR B", .{op});
             return 1;
         },
         0x05 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCR B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCR B", .{op});
             return 1;
         },
         0x06 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   MVI B, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI B, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x07 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RLC", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RLC", .{op});
             return 1;
         },
         0x09 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DAD B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DAD B", .{op});
             return 1;
         },
         0x0a => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     LDAX B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     LDAX B", .{op});
             return 1;
         },
         0x0b => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCX B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCX B", .{op});
             return 1;
         },
         0x0c => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INR C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INR C", .{op});
             return 1;
         },
         0x0d => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCR C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCR C", .{op});
             return 1;
         },
         0x0e => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   MVI C, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI C, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x0f => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RRC", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RRC", .{op});
             return 1;
         },
         0x11 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m LXI D, 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " LXI D, 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0x12 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     STAX D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     STAX D", .{op});
             return 1;
         },
         0x13 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INX D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INX D", .{op});
             return 1;
         },
         0x14 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INR D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INR D", .{op});
             return 1;
         },
         0x15 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCR D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCR D", .{op});
             return 1;
         },
         0x16 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   MVI D,  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI D,  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x17 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RAL", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RAL", .{op});
             return 1;
         },
         0x19 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DAD D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DAD D", .{op});
             return 1;
         },
         0x1a => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     LDAX D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     LDAX D", .{op});
             return 1;
         },
         0x1b => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCX D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCX D", .{op});
             return 1;
         },
         0x1c => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INR E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INR E", .{op});
             return 1;
         },
         0x1d => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCR E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCR E", .{op});
             return 1;
         },
         0x1e => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   MVI E, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI E, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x1f => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RAR", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RAR", .{op});
             return 1;
         },
         0x20 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RIM", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RIM", .{op});
             return 1;
         },
         0x21 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m LXI H, 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " LXI H, 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0x22 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m SHLD 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " SHLD 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0x23 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INX H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INX H", .{op});
             return 1;
         },
         0x24 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INR H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INR H", .{op});
             return 1;
         },
         0x25 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCR H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCR H", .{op});
             return 1;
         },
         0x26 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   MVI H, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI H, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x27 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DAA", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DAA", .{op});
             return 1;
         },
         0x29 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DAD H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DAD H", .{op});
             return 1;
         },
         0x2a => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m LHLD 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " LHLD 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0x2b => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCX H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCX H", .{op});
             return 1;
         },
         0x2c => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INR L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INR L", .{op});
             return 1;
         },
         0x2d => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCR L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCR L", .{op});
             return 1;
         },
         0x2e => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   MVI L,  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI L,  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x2f => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     CMA", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     CMA", .{op});
             return 1;
         },
         0x31 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m LXI SP, 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " LXI SP, 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0x32 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m STA 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " STA 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0x33 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INX SP", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INX SP", .{op});
             return 1;
         },
         0x34 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INR M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INR M", .{op});
             return 1;
         },
         0x35 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCR M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCR M", .{op});
             return 1;
         },
         0x36 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   MVI M, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI M, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x37 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     STC", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     STC", .{op});
             return 1;
         },
         0x39 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DAD SP", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DAD SP", .{op});
             return 1;
         },
         0x3a => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m LDA 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " LDA 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0x3b => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCX SP", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCX SP", .{op});
             return 1;
         },
         0x3c => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     INR A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     INR A", .{op});
             return 1;
         },
         0x3d => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DCR A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DCR A", .{op});
             return 1;
         },
         0x3e => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   MVI A, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI A, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x3f => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     CMC", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     CMC", .{op});
             return 1;
         },
         0x40 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV B,B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV B,B", .{op});
             return 1;
         },
         0x41 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV B,C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV B,C", .{op});
             return 1;
         },
         0x42 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV B,D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV B,D", .{op});
             return 1;
         },
         0x43 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV B,E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV B,E", .{op});
             return 1;
         },
         0x44 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV B,H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV B,H", .{op});
             return 1;
         },
         0x45 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV B,L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV B,L", .{op});
             return 1;
         },
         0x46 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV B,M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV B,M", .{op});
             return 1;
         },
         0x47 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV B,A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV B,A", .{op});
             return 1;
         },
         0x48 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV C,B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV C,B", .{op});
             return 1;
         },
         0x49 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV C,C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV C,C", .{op});
             return 1;
         },
         0x4a => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV C,D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV C,D", .{op});
             return 1;
         },
         0x4b => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV C,E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV C,E", .{op});
             return 1;
         },
         0x4c => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV C,H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV C,H", .{op});
             return 1;
         },
         0x4d => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV C,L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV C,L", .{op});
             return 1;
         },
         0x4e => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV C,M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV C,M", .{op});
             return 1;
         },
         0x4f => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV C,A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV C,A", .{op});
             return 1;
         },
         0x50 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV D,B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV D,B", .{op});
             return 1;
         },
         0x51 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV D,C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV D,C", .{op});
             return 1;
         },
         0x52 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV D,D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV D,D", .{op});
             return 1;
         },
         0x53 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV D,E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV D,E", .{op});
             return 1;
         },
         0x54 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV D,H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV D,H", .{op});
             return 1;
         },
         0x55 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV D,L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV D,L", .{op});
             return 1;
         },
         0x56 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV D,M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV D,M", .{op});
             return 1;
         },
         0x57 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV D,A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV D,A", .{op});
             return 1;
         },
         0x58 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV E,B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV E,B", .{op});
             return 1;
         },
         0x59 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV E,C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV E,C", .{op});
             return 1;
         },
         0x5a => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV E,D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV E,D", .{op});
             return 1;
         },
         0x5b => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV E,E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV E,E", .{op});
             return 1;
         },
         0x5c => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV E,H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV E,H", .{op});
             return 1;
         },
         0x5d => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV E,L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV E,L", .{op});
             return 1;
         },
         0x5e => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV E,M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV E,M", .{op});
             return 1;
         },
         0x5f => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV E,A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV E,A", .{op});
             return 1;
         },
         0x60 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV H,B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV H,B", .{op});
             return 1;
         },
         0x61 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV H,C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV H,C", .{op});
             return 1;
         },
         0x62 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV H,D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV H,D", .{op});
             return 1;
         },
         0x63 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV H,E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV H,E", .{op});
             return 1;
         },
         0x64 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV H,H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV H,H", .{op});
             return 1;
         },
         0x65 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV H,L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV H,L", .{op});
             return 1;
         },
         0x66 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV H,M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV H,M", .{op});
             return 1;
         },
         0x67 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV H,A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV H,A", .{op});
             return 1;
         },
         0x68 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV L,B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV L,B", .{op});
             return 1;
         },
         0x69 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV L,C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV L,C", .{op});
             return 1;
         },
         0x6a => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV L,D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV L,D", .{op});
             return 1;
         },
         0x6b => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV L,E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV L,E", .{op});
             return 1;
         },
         0x6c => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV L,H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV L,H", .{op});
             return 1;
         },
         0x6d => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV L,L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV L,L", .{op});
             return 1;
         },
         0x6e => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV L,M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV L,M", .{op});
             return 1;
         },
         0x6f => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV L,A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV L,A", .{op});
             return 1;
         },
         0x70 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV M,B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV M,B", .{op});
             return 1;
         },
         0x71 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV M,C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV M,C", .{op});
             return 1;
         },
         0x72 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV M,D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV M,D", .{op});
             return 1;
         },
         0x73 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV M,E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV M,E", .{op});
             return 1;
         },
         0x74 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV M,H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV M,H", .{op});
             return 1;
         },
         0x75 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV M,L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV M,L", .{op});
             return 1;
         },
         0x76 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     HLT", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     HLT", .{op});
             return 1;
         },
         0x77 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV M,A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV M,A", .{op});
             return 1;
         },
         0x78 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV A,B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV A,B", .{op});
             return 1;
         },
         0x79 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV A,C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV A,C", .{op});
             return 1;
         },
         0x7a => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV A,D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV A,D", .{op});
             return 1;
         },
         0x7b => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV A,E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV A,E", .{op});
             return 1;
         },
         0x7c => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV A,H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV A,H", .{op});
             return 1;
         },
         0x7d => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV A,L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV A,L", .{op});
             return 1;
         },
         0x7e => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV A,M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV A,M", .{op});
             return 1;
         },
         0x7f => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     MOV A,A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     MOV A,A", .{op});
             return 1;
         },
         0x80 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADD B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADD B", .{op});
             return 1;
         },
         0x81 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADD C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADD C", .{op});
             return 1;
         },
         0x82 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADD D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADD D", .{op});
             return 1;
         },
         0x83 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADD E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADD E", .{op});
             return 1;
         },
         0x84 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADD H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADD H", .{op});
             return 1;
         },
         0x85 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADD L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADD L", .{op});
             return 1;
         },
         0x86 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADD M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADD M", .{op});
             return 1;
         },
         0x87 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADD A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADD A", .{op});
             return 1;
         },
         0x88 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADC B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADC B", .{op});
             return 1;
         },
         0x89 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADC C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADC C", .{op});
             return 1;
         },
         0x8a => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADC D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADC D", .{op});
             return 1;
         },
         0x8b => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADC E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADC E", .{op});
             return 1;
         },
         0x8c => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADC H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADC H", .{op});
             return 1;
         },
         0x8d => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADC L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADC L", .{op});
             return 1;
         },
         0x8e => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADC M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADC M", .{op});
             return 1;
         },
         0x8f => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ADC A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ADC A", .{op});
             return 1;
         },
         0x90 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SUB B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SUB B", .{op});
             return 1;
         },
         0x91 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SUB C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SUB C", .{op});
             return 1;
         },
         0x92 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SUB D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SUB D", .{op});
             return 1;
         },
         0x93 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SUB E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SUB E", .{op});
             return 1;
         },
         0x94 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SUB H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SUB H", .{op});
             return 1;
         },
         0x95 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SUB L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SUB L", .{op});
             return 1;
         },
         0x96 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SUB M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SUB M", .{op});
             return 1;
         },
         0x97 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SUB A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SUB A", .{op});
             return 1;
         },
         0x98 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SBB B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SBB B", .{op});
             return 1;
         },
         0x99 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SBB C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SBB C", .{op});
             return 1;
         },
         0x9a => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SBB D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SBB D", .{op});
             return 1;
         },
         0x9b => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SBB E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SBB E", .{op});
             return 1;
         },
         0x9c => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SBB H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SBB H", .{op});
             return 1;
         },
         0x9d => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SBB L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SBB L", .{op});
             return 1;
         },
         0x9e => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SBB M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SBB M", .{op});
             return 1;
         },
         0x9f => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SBB A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SBB A", .{op});
             return 1;
         },
         0xa0 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ANA B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ANA B", .{op});
             return 1;
         },
         0xa1 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ANA C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ANA C", .{op});
             return 1;
         },
         0xa2 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ANA D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ANA D", .{op});
             return 1;
         },
         0xa3 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ANA E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ANA E", .{op});
             return 1;
         },
         0xa4 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ANA H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ANA H", .{op});
             return 1;
         },
         0xa5 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ANA L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ANA L", .{op});
             return 1;
         },
         0xa6 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ANA M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ANA M", .{op});
             return 1;
         },
         0xa7 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ANA A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ANA A", .{op});
             return 1;
         },
         0xa8 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     XRA B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     XRA B", .{op});
             return 1;
         },
         0xa9 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     XRA C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     XRA C", .{op});
             return 1;
         },
         0xaa => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     XRA D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     XRA D", .{op});
             return 1;
         },
         0xab => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     XRA E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     XRA E", .{op});
             return 1;
         },
         0xac => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     XRA H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     XRA H", .{op});
             return 1;
         },
         0xad => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     XRA L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     XRA L", .{op});
             return 1;
         },
         0xae => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     XRA M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     XRA M", .{op});
             return 1;
         },
         0xaf => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     XRA A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     XRA A", .{op});
             return 1;
         },
         0xb0 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ORA B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ORA B", .{op});
             return 1;
         },
         0xb1 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ORA C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ORA C", .{op});
             return 1;
         },
         0xb2 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ORA D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ORA D", .{op});
             return 1;
         },
         0xb3 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ORA E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ORA E", .{op});
             return 1;
         },
         0xb4 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ORA H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ORA H", .{op});
             return 1;
         },
         0xb5 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ORA L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ORA L", .{op});
             return 1;
         },
         0xb6 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ORA M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ORA M", .{op});
             return 1;
         },
         0xb7 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     ORA A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     ORA A", .{op});
             return 1;
         },
         0xb8 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     CMP B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     CMP B", .{op});
             return 1;
         },
         0xb9 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     CMP C", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     CMP C", .{op});
             return 1;
         },
         0xba => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     CMP D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     CMP D", .{op});
             return 1;
         },
         0xbb => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     CMP E", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     CMP E", .{op});
             return 1;
         },
         0xbc => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     CMP H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     CMP H", .{op});
             return 1;
         },
         0xbd => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     CMP L", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     CMP L", .{op});
             return 1;
         },
         0xbe => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     CMP M", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     CMP M", .{op});
             return 1;
         },
         0xbf => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     CMP A", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     CMP A", .{op});
             return 1;
         },
         0xc0 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RNZ", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RNZ", .{op});
             return 1;
         },
         0xc1 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     POP B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     POP B", .{op});
             return 1;
         },
         0xc2 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m JNZ 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " JNZ 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xc3 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m JMP 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " JMP 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xc4 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m CNZ 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " CNZ 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xc5 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     PUSH B", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     PUSH B", .{op});
             return 1;
         },
         0xc6 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   ADI  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   ADI  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xc7 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RST 0", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RST 0", .{op});
             return 1;
         },
         0xc8 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RZ", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RZ", .{op});
             return 1;
         },
         0xc9 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RET", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RET", .{op});
             return 1;
         },
         0xca => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m JZ 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " JZ 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xcc => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m CZ 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " CZ 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xcd => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m CALL 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " CALL 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xce => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   ACI  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   ACI  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xcf => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RST 1", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RST 1", .{op});
             return 1;
         },
         0xd0 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RNC", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RNC", .{op});
             return 1;
         },
         0xd1 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     POP D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     POP D", .{op});
             return 1;
         },
         0xd2 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m JNC 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " JNC 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xd3 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   OUT  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   OUT  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xd4 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m CNC 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " CNC 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xd5 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     PUSH D", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     PUSH D", .{op});
             return 1;
         },
         0xd6 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   SUI  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   SUI  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xd7 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RST 2", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RST 2", .{op});
             return 1;
         },
         0xd8 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RC", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RC", .{op});
             return 1;
         },
         0xda => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m JC 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " JC 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xdb => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   IN  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   IN  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xdc => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m CC 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " CC 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xde => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   SBI  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   SBI  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xdf => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RST 3", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RST 3", .{op});
             return 1;
         },
         0xe0 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RPO", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RPO", .{op});
             return 1;
         },
         0xe1 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     POP H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     POP H", .{op});
             return 1;
         },
         0xe2 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m JPO 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " JPO 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xe3 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     XTHL", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     XTHL", .{op});
             return 1;
         },
         0xe4 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m CPO 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " CPO 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xe5 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     PUSH H", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     PUSH H", .{op});
             return 1;
         },
         0xe6 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   ANI  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   ANI  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xe7 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RST 4", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RST 4", .{op});
             return 1;
         },
         0xe8 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RPE", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RPE", .{op});
             return 1;
         },
         0xe9 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     PCHL", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     PCHL", .{op});
             return 1;
         },
         0xea => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m JPE 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " JPE 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xeb => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     XCHG", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     XCHG", .{op});
             return 1;
         },
         0xec => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m CPE 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " CPE 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xee => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   XRI  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   XRI  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xef => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RST 5", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RST 5", .{op});
             return 1;
         },
         0xf0 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RP", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RP", .{op});
             return 1;
         },
         0xf1 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     POP PSW", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     POP PSW", .{op});
             return 1;
         },
         0xf2 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m JP 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " JP 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xf3 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     DI", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     DI", .{op});
             return 1;
         },
         0xf4 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m CP 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " CP 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xf5 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     PUSH PSW", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     PUSH PSW", .{op});
             return 1;
         },
         0xf6 => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   ORI  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   ORI  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xf7 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RST 6", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RST 6", .{op});
             return 1;
         },
         0xf8 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RM", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RM", .{op});
             return 1;
         },
         0xf9 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     SPHL", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     SPHL", .{op});
             return 1;
         },
         0xfa => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m JM 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " JM 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xfb => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     EI", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     EI", .{op});
             return 1;
         },
         0xfc => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}{x:0>2}\x1b[0m CM 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ " CM 0x{x:0>2}{x:0>2}", .{ op, b1, b2, b2, b1 });
             return 3;
         },
         0xfe => {
-            print("\x1b[0;34m{x:0>2}{x:0>2}\x1b[0m   CPI  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   CPI  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xff => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     RST 7", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     RST 7", .{op});
             return 1;
         },
         0xfd, 0xed, 0x08, 0x10, 0xdd, 0xd9, 0xcb, 0x38, 0x30, 0x28, 0x18 => {
-            print("\x1b[0;34m{x:0>2}\x1b[0m     NOP", .{op});
+            print(colors.BLUE ++ "{x:0>2}" ++ colors.DEFAULT ++ "     NOP", .{op});
             return 1;
         },
     }
@@ -3471,12 +3472,12 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
 pub fn memdumpCmd(pCpu: *CPU, args: [][]const u8) void {
     if (args.len > 1) {
         var addr = std.fmt.parseInt(u16, args[1], 0) catch blk: {
-            _ = stdout.writer().print("\x1b[0;31mInvalid address: '{s}'\x1b[0m\n", .{args[1]}) catch {};
+            _ = stdout.writer().print(colors.RED ++ "Invalid address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
             break :blk 0;
         };
         hexdump(pCpu.memory, addr);
     } else {
-        _ = stdout.writer().print("\x1b[0;31mAddress required\x1b[0m\n", .{}) catch {};
+        _ = stdout.writer().print(colors.RED ++ "Address required" ++ colors.DEFAULT ++ "\n", .{}) catch {};
     }
 }
 

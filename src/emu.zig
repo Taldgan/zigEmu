@@ -104,7 +104,7 @@ pub fn main() !void {
     defer arena.deinit();
 
     //Necessary to identify arrow inputs
-    //icli.disableLineBuffering();
+    icli.disableLineBuffering();
 
     var buf: [icpu.mem_size]u8 = undefined;
     for (buf) |_, i| {
@@ -121,7 +121,7 @@ pub fn main() !void {
     try icli.initHashMap(alloc, &cmd_list);
 
     while (true) {
-        var response: [][]const u8 = try icli.prompt(alloc);
+        var response: [][]const u8 = try icli.promptWithArrows(alloc);
         //Repeat prev command...
         if (std.mem.eql(u8, response[0], "")) {
             try icli.parseCommands(prevResponse, cpu);
