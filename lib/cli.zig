@@ -66,6 +66,7 @@ pub fn parseCommands(args: [][]const u8, pCpu: *CPU) !void {
 
 pub fn getUniqueCmds() []CmdStruct {
     var unique_cmds = std.ArrayList(CmdStruct).init(globAlloc);
+    defer unique_cmds.deinit();
     var mapIterator = cmd_map.valueIterator();
     var in_unique_cmds: bool = false;
     while(mapIterator.next()) |cmd|{
@@ -90,6 +91,7 @@ pub fn getUniqueCmds() []CmdStruct {
 pub fn helpCmd(args: [][]const u8) void {
     var unique_cmds: []CmdStruct = getUniqueCmds();
     var all_keys = std.ArrayList(u8).init(globAlloc);
+    defer all_keys.deinit();
     if (args.len == 1) {
         for (unique_cmds) |cmd| {
             for(cmd.keys)|key, i| {
@@ -143,6 +145,7 @@ pub fn prompt(alloc: std.mem.Allocator) ![][]const u8 {
     var cmdIterator = std.mem.tokenize(u8, buf, " ");
 
     var cmdList = std.ArrayList([]const u8).init(alloc);
+    defer cmdList.deinit();
 
     while (cmdIterator.next()) |arg| {
         try cmdList.append(arg);
