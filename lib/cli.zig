@@ -154,9 +154,9 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
                 if(line.items.len > 0)
                     _ = line.pop();
             },
-            //CLS
+            //Clear screen
             '\x0c' => {
-                _ = try stdout_writer.write("\x1bc\r> ");
+                _ = try stdout_writer.print("\x1bc\r> {s}", .{line.items});
                 continue;
             },
             //arrows!
