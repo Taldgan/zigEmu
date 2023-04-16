@@ -150,9 +150,12 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
         switch(read_in){
             //Backspace
             '\x7f' => {
-                _ = try stdout_writer.write("\x1b[D\x1b[K\x1b[D\x1b[K\x1b[D\x1b[K");
-                if(line.items.len > 0)
+                if(line.items.len > 0){
                     _ = line.pop();
+                    _ = try stdout_writer.write("\x1b[D\x1b[K\x1b[D\x1b[K\x1b[D\x1b[K");
+                }
+                else
+                    _ = try stdout_writer.write("\x1b[D\x1b[K\x1b[D\x1b[K");
             },
             //Clear screen
             '\x0c' => {
@@ -161,16 +164,22 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
             },
             //arrows!
             '\x1b' => {
-                _ = try stdin_reader.readByte();
-                read_in = try stdin_reader.readByte();
-                try line.appendSlice(switch (read_in) {
+                _ = stdin_reader.readByte() catch 0;
+                read_in = stdin_reader.readByte() catch 0;
+                _ = switch (read_in) {
                     'A' => "up",
                     'B' => "down",
-                    'C' => "right",
-                    'D' => "left",
+                    'C' => blk: {
+                        _ = try stdout_writer.write("\x1b[C");
+                        break :blk "right";
+                    },
+                    'D' => blk: { 
+                        _ = try stdout_writer.write("\x1b[D\x1b[K\x1b[D\x1b[K\x1b[D");
+                        break :blk "left";
+                    },
                     else => "\x00",
-                });
-                try stdout.writer().print("\rarrow type: {s}\n> ", .{line.toOwnedSlice()});
+                };
+                //try stdout.writer().print("\rarrow type: {s}\n> ", .{line.toOwnedSlice()});
                 continue;
             },
             '\n' => {
