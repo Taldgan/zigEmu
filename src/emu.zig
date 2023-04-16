@@ -47,7 +47,7 @@ fn initCallbacks(alloc: std.mem.Allocator) ![]icli.CmdStruct {
         .keys = key_list.toOwnedSlice(),
         .help_msg = icli.HelpMsg {
             .cmd = "disassemble",
-            .args = "[pc/addr] [numInst]",
+            .args = "[pc/addr] [x]",
             .desc = "disassemble 8 (or 'x') instructions at address or pc",
         },
         .callback =  icli.Callback{ .with_cpu = &icpu.disassembleCmd  } });
@@ -71,7 +71,7 @@ fn initCallbacks(alloc: std.mem.Allocator) ![]icli.CmdStruct {
         .help_msg = icli.HelpMsg {
             .cmd = "quit",
             .args = "",
-            .desc = "quit",
+            .desc = "quit the emulator",
         },
         .callback = icli.Callback {  .without_cpu = &quit  } });
 
@@ -117,6 +117,7 @@ pub fn main() !void {
 
     //Initilialize callbacks, then create cli global hashmap containing commands
     var cmd_list = try initCallbacks(alloc);
+    icli.setGlobAlloc(alloc);
     try icli.initHashMap(alloc, &cmd_list);
 
     while (true) {

@@ -14,6 +14,12 @@ const c = @cImport({
 var cmd_map: std.StringHashMap(CmdStruct) = undefined;
 var cmd_history: []const u8 = undefined;
 
+var globAlloc: std.mem.Allocator = undefined;
+
+pub fn setGlobAlloc(alloc: std.mem.Allocator) void {
+    globAlloc = alloc;
+}
+
 pub const Callback = union(enum) {
     with_cpu: *const fn (*CPU, [][]const u8) void,
     without_cpu: *const fn ([][]const u8) void,
@@ -58,20 +64,46 @@ pub fn parseCommands(args: [][]const u8, pCpu: *CPU) !void {
     }
 }
 
+pub fn getUniqueCmds() []CmdStruct {
+    var unique_cmds = std.ArrayList(CmdStruct).init(globAlloc);
+    var mapIterator = cmd_map.valueIterator();
+    var in_unique_cmds: bool = false;
+    while(mapIterator.next()) |cmd|{
+        in_unique_cmds = false;
+        for(unique_cmds.items) |unique_cmd|{
+            if(std.mem.eql(u8, cmd.help_msg.cmd, unique_cmd.help_msg.cmd)){
+                in_unique_cmds = true;
+                break;
+            }
+        }
+        if(!in_unique_cmds){
+            _ = unique_cmds.append(cmd.*) catch 0;
+            continue;
+        }
+    }
+    return unique_cmds.toOwnedSlice();
+}
+
 ///Iterate through global CmdStringHashMap, printing help options
 ///Alternatively if args contain a command or list of commands, print
 ///the relevant help options.
 pub fn helpCmd(args: [][]const u8) void {
+    var unique_cmds: []CmdStruct = getUniqueCmds();
+    var all_keys = std.ArrayList(u8).init(globAlloc);
     if (args.len == 1) {
-        var mapIterator = cmd_map.valueIterator();
-        while (mapIterator.next()) |cmd| {
+        for (unique_cmds) |cmd| {
+            for(cmd.keys)|key, i| {
+                if(i > 0)
+                    _ = all_keys.appendSlice("/") catch 0;
+                _ = all_keys.appendSlice(key) catch 0;
+            }
             if(cmd.help_msg.args.len != 0){
             _ = stdout.writer().print(colors.BLUE ++ "{s} " ++ colors.YELLOW ++ "{s} " ++ colors.DEFAULT ++ "- {s}\n", 
-                .{cmd.help_msg.cmd, cmd.help_msg.args, cmd.help_msg.desc}) catch {};
+                .{all_keys.toOwnedSlice(), cmd.help_msg.args, cmd.help_msg.desc}) catch {};
             }
             else{ 
             _ = stdout.writer().print(colors.BLUE ++ "{s} " ++ colors.DEFAULT ++ "- {s}\n", 
-                .{cmd.help_msg.cmd, cmd.help_msg.desc}) catch {};
+                .{all_keys.toOwnedSlice(), cmd.help_msg.desc}) catch {};
             }
         }
 
