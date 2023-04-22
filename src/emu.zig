@@ -125,10 +125,10 @@ pub fn main() !void {
         var response: [][]const u8 = try icli.promptWithArrows(alloc);
         //Repeat prev command...
         if (std.mem.eql(u8, response[0], "")) {
-            try icli.parseCommands(prevResponse, cpu);
+            try icli.parseCommands(prevResponse, cpu, true);
         } else {
             prevResponse = response;
-            try icli.parseCommands(response, cpu);
+            try icli.parseCommands(response, cpu, false);
         }
         if (stop) {
             break;

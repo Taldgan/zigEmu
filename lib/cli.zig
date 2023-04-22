@@ -139,7 +139,7 @@ pub fn initHashMap(alloc: std.mem.Allocator, cmd_listp: *[]CmdStruct) !void {
     cmd_map = cmd_hash_map;
 }
 
-pub fn parseCommands(args: [][]const u8, pCpu: *CPU) !void {
+pub fn parseCommands(args: [][]const u8, pCpu: *CPU, dup: bool) !void {
     if (cmd_map.get(args[0])) |cmd| {
         switch (cmd.callback) {
             .with_cpu => {
@@ -149,11 +149,12 @@ pub fn parseCommands(args: [][]const u8, pCpu: *CPU) !void {
                 cmd.callback.without_cpu(args);
             },
         }
-        if(!std.mem.eql(u8, cmd.help_msg.cmd, "quit"))
+        if(!std.mem.eql(u8, cmd.help_msg.cmd, "quit") and !dup)
             _ = try appendCmdToHist(args);
     } else {
         try stdout.writer().print(colors.RED ++ "Invalid command '{s}'" ++ colors.DEFAULT ++ "\n", .{args[0]});
-        _ = try appendCmdToHist(args);
+        if(!dup)
+            _ = try appendCmdToHist(args);
     }
 }
 
