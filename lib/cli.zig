@@ -12,13 +12,10 @@ const c = @cImport({
 });
 
 var cmd_map: std.StringHashMap(CmdStruct) = undefined;
-var cmd_history: []const u8 = undefined;
+var cmd_history: std.ArrayList([]const u8) = undefined;
+var cmd_index: usize = 0;
 
 var globAlloc: std.mem.Allocator = undefined;
-
-pub fn setGlobAlloc(alloc: std.mem.Allocator) void {
-    globAlloc = alloc;
-}
 
 pub const Callback = union(enum) {
     with_cpu: *const fn (*CPU, [][]const u8) void,
@@ -36,6 +33,96 @@ pub const HelpMsg = struct {
     args: []const u8,    
     desc: []const u8,    
 };
+
+
+
+fn getCmdFromHistory(up: bool) []const u8 {
+    const Static = struct {
+        var initialized: bool = false;
+    };
+    if (!Static.initialized) {
+        cmd_index = cmd_history.items.len;
+        Static.initialized = true;
+    }
+    if(up and cmd_index > 0) {
+        cmd_index -= 1;
+        return cmd_history.items[cmd_index]; 
+    }
+    else if(!up and cmd_index < cmd_history.items.len - 1){
+        cmd_index += 1;
+        return cmd_history.items[cmd_index]; 
+    }
+    else if(cmd_index == 0)
+        return cmd_history.items[cmd_index]; 
+    return "";
+}
+
+pub fn writeCommandHistory() !void {
+    const cwd = std.fs.cwd();
+    var cmd_history_file = cwd.openFile("history.txt", .{ .mode = std.fs.File.OpenMode.read_write }) catch |err| {
+        if(err == std.fs.File.OpenError.FileNotFound){
+            stdout.writer().print(colors.GREEN ++ "Creating command history file" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+            _ = cwd.createFile("history.txt", .{}) catch {
+                stdout.writer().print(colors.RED ++ "Unable to create command history file" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+                return;
+            };
+            return;
+        }
+        else{
+            stdout.writer().print(colors.RED ++ "Unable to open command history file" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+            return;
+        }
+    };
+    for(cmd_history.items) |cmd| {
+        var cmd_with_newline = try std.mem.concat(globAlloc, u8, &[_][]const u8{cmd, "\n"});
+        _ = cmd_history_file.write(cmd_with_newline) catch {
+            stdout.writer().print(colors.RED ++ "Unable to write to command history file" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+            return;
+        };
+    }
+
+}
+
+///Open 'history.txt' file and populate the cmd_history global with the command history
+pub fn loadCmdHistory() !void {
+    const cwd = std.fs.cwd();
+    var cmds = std.ArrayList([] const u8).init(globAlloc);
+    var cmd_history_file = cwd.openFile("history.txt", .{}) catch |err| {
+        if(err == std.fs.File.OpenError.FileNotFound){
+            stdout.writer().print(colors.GREEN ++ "Creating command history file" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+            _ = cwd.createFile("history.txt", .{}) catch {
+                stdout.writer().print(colors.RED ++ "Unable to create command history file" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+                return;
+            };
+            return;
+        }
+        else{
+            stdout.writer().print(colors.RED ++ "Unable to open command history file" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+            return;
+        }
+    };
+    var file_buf = try cmd_history_file.readToEndAlloc(globAlloc, std.math.maxInt(u32));
+    var cmd_iterator = std.mem.tokenize(u8, file_buf, "\n");
+    while(cmd_iterator.next()) |cmd| {
+        try cmds.append(cmd);
+    }
+    cmd_history = cmds;
+}
+
+pub fn appendCmdToHist(args: [][]const u8) !void {
+    var line = std.ArrayList(u8).init(globAlloc);
+    defer line.deinit();
+    for(args) |arg, i| {
+        try line.appendSlice(arg);
+        if(i != args.len-1)
+            try line.append(' ');
+    }
+    _ = try cmd_history.append(line.toOwnedSlice());
+}
+
+pub fn setGlobAlloc(alloc: std.mem.Allocator) void {
+    globAlloc = alloc;
+}
 
 pub fn initHashMap(alloc: std.mem.Allocator, cmd_listp: *[]CmdStruct) !void {
     var cmd_hash_map: std.StringHashMap(CmdStruct) = std.StringHashMap(CmdStruct).init(alloc);
@@ -59,8 +146,11 @@ pub fn parseCommands(args: [][]const u8, pCpu: *CPU) !void {
                 cmd.callback.without_cpu(args);
             },
         }
+        if(!std.mem.eql(u8, cmd.help_msg.cmd, "quit"))
+            _ = try appendCmdToHist(args);
     } else {
         try stdout.writer().print(colors.RED ++ "Invalid command '{s}'" ++ colors.DEFAULT ++ "\n", .{args[0]});
+        _ = try appendCmdToHist(args);
     }
 }
 
@@ -166,16 +256,32 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
             '\x1b' => {
                 _ = stdin_reader.readByte() catch 0;
                 read_in = stdin_reader.readByte() catch 0;
+                const up: bool = true;
+                const down: bool = false;
                 _ = switch (read_in) {
-                    'A' => "up",
-                    'B' => "down",
+                    'A' => blk: {
+                        //Move cursor left 4 and clear line after
+                        _ = try stdout_writer.write("\x1b[1000D\x1b[0K");
+                        line.clearAndFree();
+                        _ = try line.appendSlice(getCmdFromHistory(up));
+                        _ = try stdout_writer.print("\x1b2K\rzig@emu > {s}", .{line.items});
+                        break :blk line.items;
+                    },
+                    'B' => blk: {
+                        _ = try stdout_writer.write("\x1b[1000D\x1b[0K");
+                        line.clearAndFree();
+                        //std.debug.print("got cmd: {s}\n", .{getCmdFromHistory(down)});
+                        _ = try line.appendSlice(getCmdFromHistory(down));
+                        _ = try stdout_writer.print("\x1b2K\rzig@emu > {s}", .{line.items});
+                        break :blk line.items;
+                    },
                     'C' => blk: {
-                        _ = try stdout_writer.write("\x1b[C");
-                        break :blk "right";
+                        _ = try stdout_writer.write("\x1b[4D\x1b[0K");
+                        break :blk line.items;
                     },
                     'D' => blk: { 
-                        _ = try stdout_writer.write("\x1b[D\x1b[K\x1b[D\x1b[K\x1b[D");
-                        break :blk "left";
+                        _ = try stdout_writer.write("\x1b[4D\x1b[0K");
+                        break :blk line.items;
                     },
                     else => "\x00",
                 };
@@ -194,8 +300,11 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
                 }
                 return cmd_list.toOwnedSlice();
             },
-            else => {try line.append(read_in);},
-
+            //ASCII printable range...
+            0x20...0x7e => {
+                try line.append(read_in);
+            },
+            else => {}
         }
     }
 }

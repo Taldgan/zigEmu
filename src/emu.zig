@@ -119,6 +119,7 @@ pub fn main() !void {
     var cmd_list = try initCallbacks(alloc);
     icli.setGlobAlloc(alloc);
     try icli.initHashMap(alloc, &cmd_list);
+    try icli.loadCmdHistory();
 
     while (true) {
         var response: [][]const u8 = try icli.promptWithArrows(alloc);
@@ -133,4 +134,5 @@ pub fn main() !void {
             break;
         }
     }
+    _ = try icli.writeCommandHistory();
 }

@@ -92,29 +92,29 @@ pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
 pub fn disassembleCmd(pCpu: *CPU, args: [][]const u8) void {
     //Only way to implement local statics atm
     const Static = struct {
-        var tmpPc: u16 = 0;
+        var tmp_pc: u16 = 0;
         var initialized: bool = false;
     };
 
     if (!Static.initialized) {
-        Static.tmpPc = pCpu.pc;
+        Static.tmp_pc = pCpu.pc;
         Static.initialized = true;
     }
 
     if (args.len == 1) {
         var i: u16 = 0;
         while (i < 8) : (i += 1) {
-            _ = stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc}) catch {};
-            Static.tmpPc += disassemble(pCpu.memory, Static.tmpPc);
+            _ = stdout.writer().print("0x{x:0>2}: ", .{Static.tmp_pc}) catch {};
+            Static.tmp_pc += disassemble(pCpu.memory, Static.tmp_pc);
             _ = stdout.writer().write("\n") catch {};
         }
     } else {
         if (std.mem.eql(u8, args[1], "pc")) {
-            Static.tmpPc = pCpu.pc;
+            Static.tmp_pc = pCpu.pc;
             var i: u16 = 0;
             while (i < 8) : (i += 1) {
-                _ = stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc}) catch {};
-                Static.tmpPc += disassemble(pCpu.memory, Static.tmpPc);
+                _ = stdout.writer().print("0x{x:0>2}: ", .{Static.tmp_pc}) catch {};
+                Static.tmp_pc += disassemble(pCpu.memory, Static.tmp_pc);
                 _ = stdout.writer().write("\n") catch {};
             }
         } else {
@@ -126,12 +126,12 @@ pub fn disassembleCmd(pCpu: *CPU, args: [][]const u8) void {
                 stdout.writer().print(colors.RED ++ "Invalid address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
                 return;
             }
-            Static.tmpPc = addr;
+            Static.tmp_pc = addr;
 
             var i: u16 = 0;
             while (i < 8) : (i += 1) {
-                _ = stdout.writer().print("0x{x:0>2}: ", .{Static.tmpPc}) catch {};
-                Static.tmpPc += disassemble(pCpu.memory, Static.tmpPc);
+                _ = stdout.writer().print("0x{x:0>2}: ", .{Static.tmp_pc}) catch {};
+                Static.tmp_pc += disassemble(pCpu.memory, Static.tmp_pc);
                 _ = stdout.writer().write("\n") catch {};
             }
         }
