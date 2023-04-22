@@ -44,6 +44,9 @@ fn getCmdFromHistory(up: bool) []const u8 {
         cmd_index = cmd_history.items.len;
         Static.initialized = true;
     }
+    if(cmd_history.items.len == 0){
+       return ""; 
+    }
     if(up and cmd_index > 0) {
         cmd_index -= 1;
         return cmd_history.items[cmd_index]; 
@@ -86,7 +89,7 @@ pub fn writeCommandHistory() !void {
 ///Open 'history.txt' file and populate the cmd_history global with the command history
 pub fn loadCmdHistory() !void {
     const cwd = std.fs.cwd();
-    var cmds = std.ArrayList([] const u8).init(globAlloc);
+    cmd_history = std.ArrayList([] const u8).init(globAlloc);
     var cmd_history_file = cwd.openFile("history.txt", .{}) catch |err| {
         if(err == std.fs.File.OpenError.FileNotFound){
             stdout.writer().print(colors.GREEN ++ "Creating command history file" ++ colors.DEFAULT ++ "\n", .{}) catch {};
@@ -104,9 +107,8 @@ pub fn loadCmdHistory() !void {
     var file_buf = try cmd_history_file.readToEndAlloc(globAlloc, std.math.maxInt(u32));
     var cmd_iterator = std.mem.tokenize(u8, file_buf, "\n");
     while(cmd_iterator.next()) |cmd| {
-        try cmds.append(cmd);
+        try cmd_history.append(cmd);
     }
-    cmd_history = cmds;
 }
 
 pub fn appendCmdToHist(args: [][]const u8) !void {
