@@ -3,7 +3,7 @@ const std = @import("std");
 const stdout = std.io.getStdOut();
 const print = std.debug.print;
 
-pub const mem_size = 0x4001;
+pub const mem_size = 0x10000;
 
 // Struct representing flags register state
 const CPUFlags = struct {
@@ -69,6 +69,9 @@ pub fn loadCmd(pCpu: *CPU, args: [][]const u8) void {
         if(i >= bytesRead)
             break;
     }
+
+    //PC should be set to location of mapped code
+    pCpu.pc = mapLoc;
 
     _ = stdout.writer().print("\x1b[0;32mMapped file '{s}' into memory at address 0x{x:0>4}" ++ colors.DEFAULT ++ "\n", .{ args[1], mapLoc }) catch {};
 }
@@ -565,13 +568,13 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x2a => {
-            //LDAX H (A = (HL))
+            //LHLD H (A = (HL))
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl += cpu.l;
 
             cpu.a = cpu.memory[hl];
-            cpu.pc += 1;
+            cpu.pc += 3;
         },
         0x2b => {
             //DLX H (HL = HL - 1)
@@ -2046,10 +2049,10 @@ pub fn emulate(cpu: *CPU) void {
 
             //Write ret addr
             cpu.pc += 3;
-            cpu.memory[cpu.sp - 2] = @truncate(u8, cpu.pc);
-            cpu.memory[cpu.sp - 1] = @truncate(u8, (cpu.pc >> 8));
+            cpu.memory[cpu.sp -% 2] = @truncate(u8, cpu.pc);
+            cpu.memory[cpu.sp -% 1] = @truncate(u8, (cpu.pc >> 8));
             //Decrement SP, jump
-            cpu.sp -= 2;
+            cpu.sp -%= 2;
             cpu.pc = jmp_to;
         },
         0xce => {
@@ -3470,6 +3473,13 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
     }
     return 0;
 }
+
+
+//TODO - overhaul memdumpCmd and hexdump to account for length
+//and to print addresses next to dump
+//...perhaps a byte & word option would be nice too
+//Would be easy to write a hexdumpWord func and swap between the
+//two in memdumpCmd
 
 pub fn memdumpCmd(pCpu: *CPU, args: [][]const u8) void {
     if (args.len > 1) {
