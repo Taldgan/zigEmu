@@ -120,6 +120,7 @@ pub fn appendCmdToHist(args: [][]const u8) !void {
             try line.append(' ');
     }
     _ = try cmd_history.append(line.toOwnedSlice());
+    cmd_index = cmd_history.items.len;
 }
 
 pub fn setGlobAlloc(alloc: std.mem.Allocator) void {

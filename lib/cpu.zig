@@ -65,7 +65,9 @@ pub fn loadCmd(pCpu: *CPU, args: [][]const u8) void {
 
     //Copy bytes into cpu memory
     for (&fileBuf) |byte, i| {
-        pCpu.memory[i] = byte;
+        pCpu.memory[i+mapLoc] = byte;
+        if(i >= bytesRead)
+            break;
     }
 
     _ = stdout.writer().print("\x1b[0;32mMapped file '{s}' into memory at address 0x{x:0>4}" ++ colors.DEFAULT ++ "\n", .{ args[1], mapLoc }) catch {};
