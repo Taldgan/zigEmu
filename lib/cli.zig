@@ -11,6 +11,8 @@ const c = @cImport({
     @cInclude("unistd.h");
 });
 
+const prompt_str: []const u8 = "zig@emu > ";
+
 var cmd_map: std.StringHashMap(CmdStruct) = undefined;
 var cmd_history: std.ArrayList([]const u8) = undefined;
 var cmd_index: usize = 0;
@@ -237,7 +239,7 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
     var read_in: u8 = undefined; 
     var line = std.ArrayList(u8).init(alloc);
     defer line.deinit();
-    _ = try stdout_writer.write("zig@emu > ");
+    _ = try stdout_writer.write(prompt_str);
     while(true) {
         read_in = stdin_reader.readByte() catch 0;
         if(read_in == 0) { continue; }
@@ -253,7 +255,7 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
             },
             //Clear screen
             '\x0c' => {
-                _ = try stdout_writer.print("\x1bc\rzig@emu > {s}", .{line.items});
+                _ = try stdout_writer.print("\x1bc\r" ++ prompt_str ++ "{s}", .{line.items});
                 continue;
             },
             //arrows!
@@ -264,27 +266,43 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
                 const down: bool = false;
                 _ = switch (read_in) {
                     'A' => blk: {
+                        //up
                         //Move cursor left 4 and clear line after
                         _ = try stdout_writer.write("\x1b[1000D\x1b[0K");
                         line.clearAndFree();
                         _ = try line.appendSlice(getCmdFromHistory(up));
-                        _ = try stdout_writer.print("\x1b2K\rzig@emu > {s}", .{line.items});
+                        _ = try stdout_writer.print("\x1b2K\r" ++ prompt_str ++ "{s}", .{line.items});
                         break :blk line.items;
                     },
                     'B' => blk: {
+                        //down
                         _ = try stdout_writer.write("\x1b[1000D\x1b[0K");
                         line.clearAndFree();
                         //std.debug.print("got cmd: {s}\n", .{getCmdFromHistory(down)});
                         _ = try line.appendSlice(getCmdFromHistory(down));
-                        _ = try stdout_writer.print("\x1b2K\rzig@emu > {s}", .{line.items});
+                        _ = try stdout_writer.print("\x1b2K\r" ++ prompt_str ++  "{s}", .{line.items});
                         break :blk line.items;
                     },
                     'C' => blk: {
+                        //right
                         _ = try stdout_writer.write("\x1b[4D\x1b[0K");
                         break :blk line.items;
                     },
                     'D' => blk: { 
-                        _ = try stdout_writer.write("\x1b[4D\x1b[0K");
+                        //left
+                        std.time.sleep(1_000_000_000);
+                        _ = try stdout_writer.write("\x1b[5D\x1b[s");
+                        std.time.sleep(1_000_000_000);
+                        _ = try stdout_writer.write("\x1b[1000D\x1b[0K");
+                        std.time.sleep(1_000_000_000);
+                        _ = try stdout_writer.write("\r" ++ prompt_str);
+                        std.time.sleep(1_000_000_000);
+                        _ = try stdout_writer.print("{s}", .{line.items});
+                        std.time.sleep(1_000_000_000);
+                        _ = try stdout_writer.write("\x1b[1000D");
+                        std.time.sleep(1_000_000_000);
+                        _ = try stdout_writer.write("\x1b[u");
+                        std.time.sleep(1_000_000_000);
                         break :blk line.items;
                     },
                     else => "\x00",

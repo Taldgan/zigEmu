@@ -1054,6 +1054,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc += 1;
         },
         0x76 => {
+            //HLT
             unimplementedOpcode(op[0], cpu);
         },
         0x77 => {
@@ -2046,6 +2047,8 @@ pub fn emulate(cpu: *CPU) void {
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to += op[1];
+            //TODO 
+            //Potential hook for CP/M OS print routine here?
 
             //Write ret addr
             cpu.pc += 3;
@@ -3482,15 +3485,37 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
 //two in memdumpCmd
 
 pub fn memdumpCmd(pCpu: *CPU, args: [][]const u8) void {
-    if (args.len > 1) {
-        var addr = std.fmt.parseInt(u16, args[1], 0) catch blk: {
+    var addr: u16 = undefined;
+    var len: u16 = 48;
+    if (args.len == 2) {
+        addr = std.fmt.parseInt(u16, args[1], 0) catch blk: {
             _ = stdout.writer().print(colors.RED ++ "Invalid address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
             break :blk 0;
         };
-        hexdump(pCpu.memory, addr);
-    } else {
-        _ = stdout.writer().print(colors.RED ++ "Address required" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+    } 
+    else if (args.len >= 3) {
+        addr = std.fmt.parseInt(u16, args[1], 0) catch blk: {
+            _ = stdout.writer().print(colors.RED ++ "Invalid address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
+            break :blk 0;
+        };
+        len = std.fmt.parseInt(u16, args[2], 0) catch blk: {
+            _ = stdout.writer().print(colors.RED ++ "Invalid length: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
+            break :blk 0;
+        };
     }
+    else {
+        _ = stdout.writer().print(colors.RED ++ "Address required" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+        return;
+    }
+    //needed this for to avoid integer overflow...
+    var len_as_u17: u17 = @as(u17, len);
+    var addr_as_u17: u17 = @as(u17, addr);
+    const checkLen: u17 = len_as_u17 + addr_as_u17;
+    if(checkLen >= pCpu.memory.len){
+        _ = stdout.writer().print(colors.RED ++ "Length: '{d}' exceeds memory boundary" ++ colors.DEFAULT ++ "\n", .{len}) catch {};
+        return;
+    }
+    hexdump(pCpu.memory, addr, len);
 }
 
 fn isPrintable(char: u8) u8 {
@@ -3500,22 +3525,53 @@ fn isPrintable(char: u8) u8 {
     return char;
 }
 
-pub fn hexdump(buf: []u8, pc: u16) void {
-    for (buf[pc .. pc + 48]) |val, i| {
-        if (i % 8 == 0 and i != 0) {
-            _ = stdout.writer().write("| ") catch {};
-            for (buf[pc + i .. pc + i + 8]) |valc| {
-                _ = stdout.writer().print("{c} ", .{isPrintable(valc)}) catch {};
-            }
-            _ = stdout.writer().write("|\n") catch {};
+pub fn hexdump(buf: []u8, pc: u16, amount: u16) void {
+    const num_rows: u16 = amount / 8;
+    var locPc: u16 = pc;
+    var writer = stdout.writer();
+    var i: u16 = 0;
+    var fillspace = 8 - (amount % 8); 
+
+    while(amount >= 8 and i < num_rows) {
+        _ = writer.print("0x{x:0>4} | ", .{locPc}) catch {};
+        for(buf[locPc .. locPc+8]) |val| {
+            _ = writer.print("{x:0>2} ", .{val}) catch {};
         }
-        _ = stdout.writer().print("{x:0>2} ", .{val}) catch {};
+        _ = writer.write("| ") catch {};
+        for(buf[locPc .. locPc+8]) |val| {
+            _ = writer.print("{c} ", .{isPrintable(val)}) catch {};
+        }
+        _ = writer.write("|\n") catch {};
+        i += 1;
+        locPc += 8;
     }
-    _ = stdout.writer().write("| ") catch {};
-    for (buf[pc + 40 .. pc + 48]) |valc| {
-        _ = stdout.writer().print("{c} ", .{isPrintable(valc)}) catch {};
+    if(fillspace == 8)
+        fillspace = 0;
+    if(fillspace > 0){
+        _ = writer.print("0x{x:0>4} | ", .{locPc}) catch {};
+        for(buf[locPc .. locPc+amount-(locPc-pc)]) |val| {
+            _ = writer.print("{x:0>2} ", .{val}) catch {};
+        }
+        if(fillspace > 0){
+            i = 0;
+            while(i < fillspace){
+                _ = writer.write("   ") catch {};
+                i += 1;
+            }
+        }
+        _ = writer.write("| ") catch {};
+        for(buf[locPc .. locPc+amount-(locPc-pc)]) |val| {
+            _ = writer.print("{c} ", .{isPrintable(val)}) catch {};
+        }
+        if(fillspace > 0){
+            i = 0;
+            while(i < fillspace){
+                _ = writer.write("  ") catch {};
+                i += 1;
+            }
+        }
+        _ = writer.write("|\n") catch {};
     }
-    _ = stdout.writer().write("|\n") catch {};
 }
 
 pub fn disassembleWholeProg(progBuf: []u8) void {
