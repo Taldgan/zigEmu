@@ -87,6 +87,26 @@ fn initCallbacks(alloc: std.mem.Allocator) ![]icli.CmdStruct {
         },
         .callback = icli.Callback { .without_cpu = &icli.helpCmd } });
 
+    try key_list.append("cpm");
+    try cmd_list.append(icli.CmdStruct{ 
+        .keys = key_list.toOwnedSlice(),
+        .help_msg = icli.HelpMsg {
+            .cmd = "cpm",
+            .args = "",
+            .desc = "toggle CP/M OS Hook for print routine",
+        },
+        .callback = icli.Callback { .with_cpu = &icpu.cpmHookCmd } });
+
+    try key_list.append("status");
+    try cmd_list.append(icli.CmdStruct{ 
+        .keys = key_list.toOwnedSlice(),
+        .help_msg = icli.HelpMsg {
+            .cmd = "status",
+            .args = "",
+            .desc = "toggle print cpu status after step",
+        },
+        .callback = icli.Callback { .with_cpu = &icpu.statusPrintCmd } });
+
     return cmd_list.toOwnedSlice();
 }
 
