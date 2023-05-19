@@ -267,3 +267,10 @@ According to emulator101.com:
 - 0800 to 0fff = invaders.g
 - 1000 to 17ff = invaders.f
 - 1800 to 1fff = invaders.e
+
+# CP/M OS
+- Apparently the CP/M OS has a print routine at location '5'
+- If register 'c' is 9 when a call to address '5' is made, a string is
+  printed from the offset held in 'de' until the sentinel '$'
+- I think for now I should just hook this by implementing a CP/M OS flag in the call
+  opcode or something that executes this routine
