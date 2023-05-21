@@ -7,12 +7,12 @@ pub const mem_size = 0x10000;
 
 // Struct representing flags register state
 const CPUFlags = struct {
-    z: u1 = 1,
-    s: u1 = 1,
-    p: u1 = 1,
-    cy: u1 = 1,
-    ac: u1 = 1,
-    pad: u1 = 1,
+    z: u1 = 0,
+    s: u1 = 0,
+    p: u1 = 0,
+    cy: u1 = 0,
+    ac: u1 = 0,
+    pad: u1 = 0,
 };
 
 // Struct representing the CPU
@@ -225,10 +225,7 @@ pub fn printCpuCmd(pCpu: *CPU, args: [][]const u8) void {
 }
 
 pub fn parity(result: u16) u1 {
-    if (result % 2 == 0) {
-        return 1;
-    }
-    return 0;
+    return @boolToInt(result % 2 != 0);
 }
 
 pub fn printCpuStatus(pCpu: *CPU) void {
@@ -343,7 +340,7 @@ pub fn emulate(cpu: *CPU) void {
             hl +%= cpu.l;
 
             hl +%= bc;
-            cpu.cc.cy = @boolToInt(((hl & 0x100) != 0));
+            cpu.cc.cy = @boolToInt(((hl & 0x10000) != 0));
             cpu.h = @truncate(u8, hl >> 8);
             cpu.l = @truncate(u8, hl);
             cpu.pc +%= 1;
@@ -478,7 +475,7 @@ pub fn emulate(cpu: *CPU) void {
             hl +%= cpu.l;
 
             hl +%= de;
-            cpu.cc.cy = @boolToInt(((hl & 0x100) != 0));
+            cpu.cc.cy = @boolToInt(((hl & 0x10000) != 0));
             cpu.h = @truncate(u8, hl >> 8);
             cpu.l = @truncate(u8, hl);
             cpu.pc +%= 1;
@@ -608,7 +605,7 @@ pub fn emulate(cpu: *CPU) void {
             hl +%= cpu.l;
 
             hl = hl << 1;
-            cpu.cc.cy = @boolToInt(((hl & 0x100) != 0));
+            cpu.cc.cy = @boolToInt(((hl & 0x10000) != 0));
             cpu.h = @truncate(u8, hl >> 8);
             cpu.l = @truncate(u8, hl);
             cpu.pc +%= 1;
@@ -739,7 +736,7 @@ pub fn emulate(cpu: *CPU) void {
             hl +%= cpu.l;
 
             hl +%= cpu.sp;
-            cpu.cc.cy = @boolToInt(((hl & 0x100) != 0));
+            cpu.cc.cy = @boolToInt(((hl & 0x10000) != 0));
             cpu.h = @truncate(u8, hl >> 8);
             cpu.l = @truncate(u8, hl);
             cpu.pc +%= 1;
@@ -3665,12 +3662,12 @@ pub fn disassembleWholeProg(progBuf: []u8) void {
 pub fn initCpu(mem: []u8, alloc: std.mem.Allocator) !*CPU {
     // cflags all set to defaults above, no need to initialize
     var cflags = try alloc.create(CPUFlags);
-    cflags.z = 1;
-    cflags.s = 1;
-    cflags.p = 1;
-    cflags.cy = 1;
-    cflags.ac = 1;
-    cflags.pad = 1;
+    cflags.z = 0;
+    cflags.s = 0;
+    cflags.p = 0;
+    cflags.cy = 0;
+    cflags.ac = 0;
+    cflags.pad = 0;
 
     var cpu = try alloc.create(CPU);
     cpu.a = 0;
