@@ -119,20 +119,21 @@ pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
         printCpuStatus(pCpu);
 
         var disas_line: u16 = pCpu.pc - 10;
+        var inst_len: u8 = 1;
         while (disas_line < pCpu.pc+10) {
             if(disas_line != pCpu.pc) {
                 _ = stdout.writer().print("   ", .{}) catch {};
                 _ = stdout.writer().print("0x{x:0>2}: ", .{disas_line}) catch {};
-                _ = disassemble(pCpu.memory, disas_line);
+                inst_len = disassemble(pCpu.memory, disas_line);
                 _ = stdout.writer().write("\n") catch {};
             }
             else {
                 _ = stdout.writer().print("-> ", .{}) catch {};
                 _ = stdout.writer().print("0x{x:0>2}: ", .{disas_line}) catch {};
-                _ = disassemble(pCpu.memory, disas_line);
+                inst_len = disassemble(pCpu.memory, disas_line);
                 _ = stdout.writer().write("\n") catch {};
             }
-            disas_line += 1;
+            disas_line += inst_len;
         }
     }
     else {
