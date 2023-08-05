@@ -290,19 +290,7 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
                     },
                     'D' => blk: { 
                         //left
-                        std.time.sleep(1_000_000_000);
-                        _ = try stdout_writer.write("\x1b[5D\x1b[s");
-                        std.time.sleep(1_000_000_000);
-                        _ = try stdout_writer.write("\x1b[1000D\x1b[0K");
-                        std.time.sleep(1_000_000_000);
-                        _ = try stdout_writer.write("\r" ++ prompt_str);
-                        std.time.sleep(1_000_000_000);
-                        _ = try stdout_writer.print("{s}", .{line.items});
-                        std.time.sleep(1_000_000_000);
-                        _ = try stdout_writer.write("\x1b[1000D");
-                        std.time.sleep(1_000_000_000);
-                        _ = try stdout_writer.write("\x1b[u");
-                        std.time.sleep(1_000_000_000);
+                        _ = try stdout_writer.write("\x1b[5D\x1b[0K");
                         break :blk line.items;
                     },
                     else => "\x00",
