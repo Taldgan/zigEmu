@@ -117,10 +117,29 @@ pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
     }
     if (pCpu.status_print) {
         printCpuStatus(pCpu);
+
+        var disas_line: u16 = pCpu.pc - 10;
+        while (disas_line < pCpu.pc+10) {
+            if(disas_line != pCpu.pc) {
+                _ = stdout.writer().print("   ", .{}) catch {};
+                _ = stdout.writer().print("0x{x:0>2}: ", .{disas_line}) catch {};
+                _ = disassemble(pCpu.memory, disas_line);
+                _ = stdout.writer().write("\n") catch {};
+            }
+            else {
+                _ = stdout.writer().print("-> ", .{}) catch {};
+                _ = stdout.writer().print("0x{x:0>2}: ", .{disas_line}) catch {};
+                _ = disassemble(pCpu.memory, disas_line);
+                _ = stdout.writer().write("\n") catch {};
+            }
+            disas_line += 1;
+        }
     }
-    stdout.writer().print("0x{x:0>2}: ", .{pCpu.pc}) catch {};
-    _ = disassemble(pCpu.memory, pCpu.pc);
-    _ = stdout.writer().write("\n") catch {};
+    else {
+        stdout.writer().print("0x{x:0>2}: ", .{pCpu.pc}) catch {};
+        _ = disassemble(pCpu.memory, pCpu.pc);
+        _ = stdout.writer().write("\n") catch {};
+    }
 }
 
 pub fn disassembleCmd(pCpu: *CPU, args: [][]const u8) void {

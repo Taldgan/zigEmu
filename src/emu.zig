@@ -143,7 +143,7 @@ pub fn main() !void {
 
     while (true) {
         var response: [][]const u8 = try icli.promptWithArrows(alloc);
-        //Repeat prev command...
+        //Repeat prev command if only 'enter' is pressed...
         if (std.mem.eql(u8, response[0], "")) {
             try icli.parseCommands(prevResponse, cpu, true);
         } else {
