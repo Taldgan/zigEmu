@@ -245,7 +245,22 @@ pub fn printCpuCmd(pCpu: *CPU, args: [][]const u8) void {
 }
 
 pub fn parity(result: u16) u1 {
-    return @boolToInt(result % 2 != 0);
+    // Misunderstood - parity is the property of the count of bits set to '1'
+    // Even parity = an even sum of set bits
+    var bit_count: u8 = 0;
+    var tmp: u16 = result;
+    var i: u5 = 0;
+    print("tmp: 0x{x:0>4}\n", .{tmp});
+    while (i < 16) {
+        if (tmp & 1 == 1) {
+            bit_count += 1;
+        }
+        tmp = tmp >> 1;
+        i += 1;
+    }
+    print("resulting bit_count: {d}\n", .{bit_count});
+    //odd parity = '0', even parity = '1'
+    return @boolToInt(bit_count % 2 == 0);
 }
 
 pub fn printCpuStatus(pCpu: *CPU) void {
