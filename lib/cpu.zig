@@ -2557,7 +2557,7 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.pc +%= 1;
+            cpu.pc +%= 2;
         },
         0xff => {
             //RST 7 (CALL 0x38)
