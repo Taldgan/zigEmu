@@ -75,6 +75,28 @@ fn initCallbacks(alloc: std.mem.Allocator) ![]icli.CmdStruct {
         },
         .callback = icli.Callback {  .without_cpu = &quit  } });
 
+    try key_list.append("c");
+    try key_list.append("continue");
+    try cmd_list.append(icli.CmdStruct{ 
+        .keys = key_list.toOwnedSlice(),
+        .help_msg = icli.HelpMsg {
+            .cmd = "continue",
+            .args = "[addr]",
+            .desc = "continue, or continue until given address",
+        },
+        .callback = icli.Callback { .with_cpu = &icli.CONTINUECMD } });
+
+    try key_list.append("b");
+    try key_list.append("break");
+    try cmd_list.append(icli.CmdStruct{ 
+        .keys = key_list.toOwnedSlice(),
+        .help_msg = icli.HelpMsg {
+            .cmd = "break",
+            .args = "[addr]",
+            .desc = "set a breakpoint on addr",
+        },
+        .callback = icli.Callback { .with_cpu = &icli.BREAKCMD } });
+
     try key_list.append("h");
     try key_list.append("?");
     try key_list.append("help");
