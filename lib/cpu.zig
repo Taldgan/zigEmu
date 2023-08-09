@@ -2436,8 +2436,6 @@ pub fn emulate(cpu: *CPU) void {
         0xf1 => {
             //POP PSW (FLAGS = (SP), A = (SP +1), SP +%= 2)
             var flags: u8 = cpu.memory[cpu.sp];
-            print("POP\n", .{});
-            print("flags: 0x{x:0<2}\n", .{flags});
             cpu.cc.z = @boolToInt((flags & 1) == 1);
             cpu.cc.s = @boolToInt((flags & 2) == 2);
             cpu.cc.p = @boolToInt((flags & 4) == 4);
@@ -2445,8 +2443,6 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.ac = @boolToInt((flags & 16) == 16);
 
             cpu.a = cpu.memory[cpu.sp + 1];
-            print("a: 0x{x:0<2}\n", .{cpu.a});
-            printCpuStatus(cpu);
             cpu.sp +%= 2;
             cpu.pc +%= 1;
         },
@@ -2483,18 +2479,14 @@ pub fn emulate(cpu: *CPU) void {
         0xf5 => {
             //PUSH PSW ((SP-2) = FLAGS, (SP-1) = A, SP -%= 2)
             var flags: u8 = 0;
-            flags = (flags | cpu.cc.ac) << 4;
-            flags = (flags | cpu.cc.cy) << 3;
-            flags = (flags | cpu.cc.p) << 2;
-            flags = (flags | cpu.cc.s) << 1;
+            flags = flags | (@as(u8, cpu.cc.ac) << 4);
+            flags = flags | (@as(u8, cpu.cc.cy) << 3);
+            flags = flags | (@as(u8, cpu.cc.p) << 2);
+            flags = flags | (@as(u8, cpu.cc.s) << 1);
             flags = flags | cpu.cc.z;
-            print("PUSH\n", .{});
-            print("flags: 0x{x:0<2}\n", .{flags});
-            print("a: 0x{x:0<2}\n", .{cpu.a});
 
             cpu.memory[cpu.sp - 2] = flags;
             cpu.memory[cpu.sp - 1] = cpu.a;
-            printCpuStatus(cpu);
             cpu.sp -%= 2;
             cpu.pc +%= 1;
         },
