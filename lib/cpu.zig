@@ -2618,7 +2618,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x06 => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI B, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI B, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x07 => {
@@ -2646,7 +2646,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x0e => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI C, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI C, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x0f => {
@@ -2674,7 +2674,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x16 => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI D,  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI D, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x17 => {
@@ -2702,7 +2702,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x1e => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI E, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI E, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x1f => {
@@ -2734,7 +2734,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x26 => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI H, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI H, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x27 => {
@@ -2762,7 +2762,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x2e => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI L,  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI L,  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x2f => {
@@ -2790,7 +2790,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x36 => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI M, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI M, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x37 => {
@@ -2818,7 +2818,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x3e => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI A, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI A, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x3f => {
