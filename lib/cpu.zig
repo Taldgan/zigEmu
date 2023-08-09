@@ -250,7 +250,6 @@ pub fn parity(result: u16) u1 {
     var bit_count: u8 = 0;
     var tmp: u16 = result;
     var i: u5 = 0;
-    print("tmp: 0x{x:0>4}\n", .{tmp});
     while (i < 16) {
         if (tmp & 1 == 1) {
             bit_count += 1;
@@ -258,7 +257,6 @@ pub fn parity(result: u16) u1 {
         tmp = tmp >> 1;
         i += 1;
     }
-    print("resulting bit_count: {d}\n", .{bit_count});
     //odd parity = '0', even parity = '1'
     return @boolToInt(bit_count % 2 == 0);
 }
@@ -2438,6 +2436,8 @@ pub fn emulate(cpu: *CPU) void {
         0xf1 => {
             //POP PSW (FLAGS = (SP), A = (SP +1), SP +%= 2)
             var flags: u8 = cpu.memory[cpu.sp];
+            print("POP\n", .{});
+            print("flags: 0x{x:0<2}\n", .{flags});
             cpu.cc.z = @boolToInt((flags & 1) == 1);
             cpu.cc.s = @boolToInt((flags & 2) == 2);
             cpu.cc.p = @boolToInt((flags & 4) == 4);
@@ -2445,6 +2445,8 @@ pub fn emulate(cpu: *CPU) void {
             cpu.cc.ac = @boolToInt((flags & 16) == 16);
 
             cpu.a = cpu.memory[cpu.sp + 1];
+            print("a: 0x{x:0<2}\n", .{cpu.a});
+            printCpuStatus(cpu);
             cpu.sp +%= 2;
             cpu.pc +%= 1;
         },
@@ -2486,9 +2488,13 @@ pub fn emulate(cpu: *CPU) void {
             flags = (flags | cpu.cc.p) << 2;
             flags = (flags | cpu.cc.s) << 1;
             flags = flags | cpu.cc.z;
+            print("PUSH\n", .{});
+            print("flags: 0x{x:0<2}\n", .{flags});
+            print("a: 0x{x:0<2}\n", .{cpu.a});
 
             cpu.memory[cpu.sp - 2] = flags;
             cpu.memory[cpu.sp - 1] = cpu.a;
+            printCpuStatus(cpu);
             cpu.sp -%= 2;
             cpu.pc +%= 1;
         },
