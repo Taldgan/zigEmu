@@ -84,7 +84,7 @@ fn initCallbacks(alloc: std.mem.Allocator) ![]icli.CmdStruct {
             .args = "[addr]",
             .desc = "continue, or continue until given address",
         },
-        .callback = icli.Callback { .with_cpu = &icli.CONTINUECMD } });
+        .callback = icli.Callback { .with_cpu = &icpu.continueCmd } });
 
     try key_list.append("b");
     try key_list.append("break");
@@ -92,10 +92,10 @@ fn initCallbacks(alloc: std.mem.Allocator) ![]icli.CmdStruct {
         .keys = key_list.toOwnedSlice(),
         .help_msg = icli.HelpMsg {
             .cmd = "break",
-            .args = "[addr]",
-            .desc = "set a breakpoint on addr",
+            .args = "[e id/d id/c id/addr]",
+            .desc = "List breakpoints, set a breakpoint on addr, or enable/disable/clear breakpoints by id",
         },
-        .callback = icli.Callback { .with_cpu = &icli.BREAKCMD } });
+        .callback = icli.Callback { .with_cpu = &icpu.breakCmd } });
 
     try key_list.append("h");
     try key_list.append("?");
@@ -160,6 +160,7 @@ pub fn main() !void {
     //Initilialize callbacks, then create cli global hashmap containing commands
     var cmd_list = try initCallbacks(alloc);
     icli.setGlobAlloc(alloc);
+    icpu.setGlobAlloc(alloc);
     try icli.initHashMap(alloc, &cmd_list);
     try icli.loadCmdHistory();
 

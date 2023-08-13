@@ -4,6 +4,16 @@ const stdout = std.io.getStdOut();
 const print = std.debug.print;
 
 pub const mem_size = 0x10000;
+var globAlloc: std.mem.Allocator = undefined;
+
+
+// Times hit, addr, id?
+const Breakpoint = struct {
+    addr: u16,
+    times_hit: u32,
+    id: u32,
+    enabled: bool,
+};
 
 // Struct representing flags register state
 const CPUFlags = struct {
@@ -30,7 +40,12 @@ pub const CPU = struct {
     memory: []u8,
     cpm_hook: bool,
     status_print: bool,
+    bps: std.ArrayList(Breakpoint),
 };
+
+pub fn setGlobAlloc(alloc: std.mem.Allocator) void {
+    globAlloc = alloc;
+}
 
 pub fn statusPrintCmd(pCpu: *CPU, args: [][]const u8) void {
     _ = args;
@@ -102,9 +117,18 @@ pub fn loadCmd(pCpu: *CPU, args: [][]const u8) void {
     _ = stdout.writer().print("\x1b[0;32mMapped file '{s}' into memory at address 0x{x:0>4}" ++ colors.DEFAULT ++ "\n", .{ args[1], mapLoc }) catch {};
 }
 
+pub fn continueCmd(pCpu: *CPU, args: [][]const u8) void {
+    _ = args;
+    while (true) {
+        if(emulate(pCpu)) {
+            break;
+        }
+    }
+}
+
 pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
     if (args.len == 1) {
-        emulate(pCpu);
+        _ = emulate(pCpu);
     } else {
         const steps: u32 = std.fmt.parseInt(u32, args[1], 0) catch blk: {
             _ = stdout.writer().print(colors.RED ++ "Invalid number of steps: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
@@ -112,7 +136,9 @@ pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
         };
         var i: u32 = 0;
         while (i < steps) : (i += 1) {
-            emulate(pCpu);
+            if(emulate(pCpu)) {
+                break;
+            }
         }
     }
     if (pCpu.status_print) {
@@ -290,7 +316,8 @@ pub fn printCpuStatus(pCpu: *CPU) void {
 }
 
 ///Func to emulate 8080 instructions
-pub fn emulate(cpu: *CPU) void {
+//Return 'true' if break after emulate
+pub fn emulate(cpu: *CPU) bool {
     @setRuntimeSafety(false);
     var op: []u8 = cpu.memory[cpu.pc..(cpu.pc + 3)];
     switch (op[0]) {
@@ -2574,6 +2601,17 @@ pub fn emulate(cpu: *CPU) void {
             cpu.pc +%= 1;
         },
     }
+    for (cpu.bps.items) | bp, i |{
+        if (bp.addr == cpu.pc) {
+            if (bp.enabled) {
+                _ = stdout.writer().print(colors.GREEN ++ "Hit breakpoint {d}" ++ colors.DEFAULT ++ "\n", .{bp.id}) catch {};
+                var my_bp = &cpu.bps.items[i];
+                my_bp.times_hit += 1;
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 pub fn unimplementedOpcode(op: u8, cpu: *CPU) void {
@@ -3580,7 +3618,120 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
     }
     return 0;
 }
+pub fn comp_uints(context: void, a: u32, b: u32) bool {
+    return std.sort.asc(u32)(context, a, b);
+}
 
+//Need to fix to return proper min available value.
+pub fn getMinAvailableId(pCpu: *CPU) u32 {
+    var id_list = std.ArrayList(u32).init(globAlloc);
+    for (pCpu.bps.items) | bp | {
+        id_list.append(bp.id) catch {
+            return 0;
+        };
+    }
+    var id_slice: []u32 = id_list.toOwnedSlice();
+    std.debug.print("ID SLICE: {any}\n", .{id_slice});
+    std.sort.sort(u32, id_slice, {}, comp_uints);
+    //Once sorted, look for smallest 'gap' (i.e 1, 2, 3,__ 6)
+    for (id_slice) | id, i | {
+        if (i == id_slice.len-1) {
+            return id+1;
+        }
+        else if (id_slice[i+1] != id + 1) {
+            return id+1;
+        }
+    }
+    return 1;
+}
+
+pub fn initBreakpoint(pCpu: *CPU, addr: u16) !*Breakpoint {
+    var new_id: u32 = getMinAvailableId(pCpu);
+    var new_bp = try globAlloc.create(Breakpoint);
+    new_bp.id = new_id;
+    new_bp.addr = addr;
+    new_bp.enabled = true;
+    new_bp.times_hit = 0;
+    return new_bp;
+
+}
+
+pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
+    var addr: u16 = undefined;
+    //List breakpoints
+    if (args.len == 1) {
+        for (pCpu.bps.items) | bp | {
+            _ = stdout.writer().print(colors.BLUE ++ "Id: {d}\n", .{bp.id}) catch {};
+            _ = stdout.writer().print( "  Times Hit: {d}\n", .{bp.times_hit}) catch {};
+            _ = stdout.writer().print("  Address: 0x{x:0>4}" ++ colors.DEFAULT ++ "\n", .{bp.addr}) catch {};
+            if (bp.enabled) {
+                _ = stdout.writer().print(colors.GREEN ++ "  Enabled" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+            }
+            else {
+                _ = stdout.writer().print(colors.RED ++ "  Disabled" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+            }
+        }
+        if (pCpu.bps.items.len == 0) {
+            _ = stdout.writer().print(colors.RED ++ "No breakpoints set" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+        }
+        return;
+    }
+    //Break on addr
+    if (args.len == 2) {
+        addr = std.fmt.parseInt(u16, args[1], 0) catch {
+            _ = stdout.writer().print(colors.RED ++ "Invalid address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
+            return;
+        };
+        var new_bp: *Breakpoint = initBreakpoint(pCpu, addr) catch {
+            _ = stdout.writer().print(colors.RED ++ "Failed to create breakpint on address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
+            return;
+        };
+        pCpu.bps.append(new_bp.*) catch {
+            _ = stdout.writer().print(colors.RED ++ "Failed to append breakpoint on address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
+            return;
+        };
+    } 
+    //Disable/enable bp
+    else if (args.len == 3) {
+        var sub_cmd: []const u8 = args[1];
+        var bp_id: u32 = std.fmt.parseInt(u32, args[2], 0) catch blk: {
+            _ = stdout.writer().print(colors.RED ++ "Invalid breakpoint id: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
+            break :blk 0;
+        };
+        if (std.mem.eql(u8, sub_cmd, "d")) {
+            for (pCpu.bps.items) | bp, i | {
+                if (bp.id == bp_id) {
+                    var my_bp = &pCpu.bps.items[i];
+                    my_bp.enabled = false;
+                    _ = stdout.writer().print(colors.GREEN ++ "Disabled breakpoint {s}" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
+                    return;
+                }
+            }
+            _ = stdout.writer().print(colors.RED ++ "No breakpoint matching id {s}" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
+        }
+        else if (std.mem.eql(u8, sub_cmd, "e")) {
+            for (pCpu.bps.items) | bp, i | {
+                if (bp.id == bp_id) {
+                    var my_bp = &pCpu.bps.items[i];
+                    my_bp.enabled = true;
+                    _ = stdout.writer().print(colors.GREEN ++ "Enabled breakpoint {s}" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
+                    return;
+                }
+            }
+            _ = stdout.writer().print(colors.RED ++ "No breakpoint matching id {s}" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
+        }
+        else if (std.mem.eql(u8, sub_cmd, "c")) {
+            for (pCpu.bps.items) | bp, i | {
+                if (bp.id == bp_id) {
+                    _ = pCpu.bps.orderedRemove(i);
+                    _ = stdout.writer().print(colors.GREEN ++ "Removed breakpoint {s}" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
+                    return;
+                }
+            }
+            _ = stdout.writer().print(colors.RED ++ "No breakpoint matching id {s}" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
+        }
+    }
+}
 
 //TODO - overhaul memdumpCmd and hexdump to account for length
 //and to print addresses next to dump
@@ -3717,6 +3868,8 @@ pub fn initCpu(mem: []u8, alloc: std.mem.Allocator) !*CPU {
 
     cpu.cpm_hook = false;
     cpu.status_print = false;
+
+    cpu.bps = std.ArrayList(Breakpoint).init(alloc);
 
     return cpu;
 }

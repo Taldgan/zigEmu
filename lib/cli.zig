@@ -17,7 +17,7 @@ var cmd_map: std.StringHashMap(CmdStruct) = undefined;
 var cmd_history: std.ArrayList([]const u8) = undefined;
 var cmd_index: usize = 0;
 
-var globAlloc: std.mem.Allocator = undefined;
+pub var globAlloc: std.mem.Allocator = undefined;
 
 pub const Callback = union(enum) {
     with_cpu: *const fn (*CPU, [][]const u8) void,
