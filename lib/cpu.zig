@@ -3630,16 +3630,19 @@ pub fn getMinAvailableId(pCpu: *CPU) u32 {
             return 0;
         };
     }
+    var min_possible_id: u32 = 1;
     var id_slice: []u32 = id_list.toOwnedSlice();
-    std.debug.print("ID SLICE: {any}\n", .{id_slice});
     std.sort.sort(u32, id_slice, {}, comp_uints);
     //Once sorted, look for smallest 'gap' (i.e 1, 2, 3,__ 6)
     for (id_slice) | id, i | {
-        if (i == id_slice.len-1) {
-            return id+1;
+        if (id == min_possible_id) {
+            min_possible_id += 1;
         }
-        else if (id_slice[i+1] != id + 1) {
-            return id+1;
+        if(id_slice.len-1 == i) {
+            return min_possible_id;
+        }
+        if(id + 1 != id_slice[i+1]) {
+            return min_possible_id;
         }
     }
     return 1;
