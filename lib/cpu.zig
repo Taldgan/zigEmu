@@ -122,8 +122,12 @@ pub fn continueCmd(pCpu: *CPU, args: [][]const u8) void {
     _ = args;
     while (true) {
         if(emulate(pCpu)) {
+
             break;
         }
+    }
+    if (pCpu.status_print) {
+        printCpuStatus(pCpu);
     }
 }
 
@@ -1530,7 +1534,7 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var op3: u16 = cpu.cc.cy;
-            var result: u16 = op1 - op2 - op3;
+            var result: u16 = op1 -% op2 -% op3;
             cpu.a = @truncate(u8, result);
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
@@ -1543,7 +1547,7 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var op3: u16 = cpu.cc.cy;
-            var result: u16 = op1 - op2 - op3;
+            var result: u16 = op1 -% op2 -% op3;
             cpu.a = @truncate(u8, result);
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
@@ -1556,7 +1560,7 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var op3: u16 = cpu.cc.cy;
-            var result: u16 = op1 - op2 - op3;
+            var result: u16 = op1 -% op2 -% op3;
             cpu.a = @truncate(u8, result);
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
@@ -1569,7 +1573,7 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var op3: u16 = cpu.cc.cy;
-            var result: u16 = op1 - op2 - op3;
+            var result: u16 = op1 -% op2 -% op3;
             cpu.a = @truncate(u8, result);
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
@@ -1582,7 +1586,7 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var op3: u16 = cpu.cc.cy;
-            var result: u16 = op1 - op2 - op3;
+            var result: u16 = op1 -% op2 -% op3;
             cpu.a = @truncate(u8, result);
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
@@ -1595,7 +1599,7 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var op3: u16 = cpu.cc.cy;
-            var result: u16 = op1 - op2 - op3;
+            var result: u16 = op1 -% op2 -% op3;
             cpu.a = @truncate(u8, result);
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
@@ -1613,7 +1617,7 @@ pub fn emulate(cpu: *CPU) bool {
 
             var op2: u16 = cpu.memory[hl];
             var op3: u16 = cpu.cc.cy;
-            var result: u16 = op1 - op2 - op3;
+            var result: u16 = op1 -% op2 -% op3;
             cpu.a = @truncate(u8, result);
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
@@ -1626,7 +1630,7 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var op3: u16 = cpu.cc.cy;
-            var result: u16 = op1 - op2 - op3;
+            var result: u16 = op1 -% op2 -% op3;
             cpu.a = @truncate(u8, result);
             cpu.cc.z = @boolToInt(result == 0);
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
@@ -2487,7 +2491,9 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xf3 => {
-            unimplementedOpcode(op[0], cpu);
+            //unimplementedOpcode(op[0], cpu);
+            //Disables interupts?
+            cpu.pc +%= 1;
         },
         0xf4 => {
             //CP addr
@@ -2561,7 +2567,9 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xfb => {
-            unimplementedOpcode(op[0], cpu);
+            //unimplementedOpcode(op[0], cpu);
+            //Enables interupts?
+            cpu.pc +%= 1;
         },
         0xfc => {
             //CM addr
@@ -2585,6 +2593,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.cc.s = @boolToInt(result & 0x80 != 0);
             cpu.cc.cy = @boolToInt(result > 0xff);
             cpu.cc.p = parity(result);
+            cpu.cc.ac = parity(result);
             cpu.pc +%= 2;
         },
         0xff => {
@@ -2666,7 +2675,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x06 => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI B, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI B, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x07 => {
@@ -2694,7 +2703,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x0e => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI C, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI C, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x0f => {
@@ -2722,7 +2731,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x16 => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI D, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI D, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x17 => {
@@ -2750,7 +2759,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x1e => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI E, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI E, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x1f => {
@@ -2782,7 +2791,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x26 => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI H, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI H, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x27 => {
@@ -2810,7 +2819,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x2e => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI L,  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI L,  0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x2f => {
@@ -2838,7 +2847,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x36 => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI M, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI M, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x37 => {
@@ -2866,7 +2875,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0x3e => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "    MVI A, 0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   MVI A, 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0x3f => {
@@ -3614,7 +3623,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 3;
         },
         0xfe => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   CPI  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   CPI 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xff => {
@@ -3703,6 +3712,7 @@ pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
             _ = stdout.writer().print(colors.RED ++ "Failed to append breakpoint on address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
             return;
         };
+        _ = stdout.writer().print(colors.GREEN ++ "Breakpoint {d} added" ++ colors.DEFAULT ++ "\n", .{new_bp.id}) catch {};
     } 
     //Disable/enable bp
     else if (args.len == 3) {
@@ -3879,8 +3889,8 @@ pub fn initCpu(mem: []u8, alloc: std.mem.Allocator, broken: *bool) !*CPU {
     cpu.cc = cflags.*;
     cpu.memory = mem;
 
-    cpu.cpm_hook = false;
-    cpu.status_print = false;
+    cpu.cpm_hook = true;
+    cpu.status_print = true;
 
     cpu.bps = std.ArrayList(Breakpoint).init(alloc);
 
