@@ -11,11 +11,12 @@ const c = @cImport({
     @cInclude("unistd.h");
 });
 
-const prompt_str: []const u8 = "zig@emu > ";
+const prompt_str: []const u8 = "zig@emu$ ";
 
 var cmd_map: std.StringHashMap(CmdStruct) = undefined;
 var cmd_history: std.ArrayList([]const u8) = undefined;
 var cmd_index: usize = 0;
+var glob_broken: *bool = undefined;
 
 pub var globAlloc: std.mem.Allocator = undefined;
 
@@ -222,6 +223,40 @@ pub fn helpCmd(args: [][]const u8) void {
     }
 }
 
+fn sigint_handler(int: c_int) callconv(.C) void {
+    _ = int;
+    glob_broken.* = true;
+}
+
+pub fn print_trace() void {
+    var killme: [20]usize = .{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, };
+    var trace_p: std.builtin.StackTrace = .{ .index = 0 , .instruction_addresses = &killme};
+    gimmeTrace(&trace_p);
+    std.debug.dumpStackTrace(trace_p);
+}
+
+fn gimmeTrace(trace: *std.builtin.StackTrace) void {
+    std.debug.captureStackTrace(@returnAddress(), trace);
+}
+
+pub fn handle_sigint(broken: *bool) void {
+    _ = std.os.SIG.INT;
+    var mysigset: std.os.sigset_t  = std.os.empty_sigset;
+    std.os.linux.sigaddset(&mysigset, std.os.SIG.INT);
+    const act: std.os.Sigaction = .{
+        .handler = .{
+            .handler = sigint_handler
+        },
+        .mask = mysigset,
+        .flags = std.os.SA.RESTART,
+    };
+
+    std.os.sigaction(std.os.SIG.INT, &act, null) catch {
+        _ = stdout.writer().write(colors.RED ++ "Failed to hook SIGINT" ++ colors.DEFAULT ++ "\n") catch {};
+    };
+    glob_broken = broken;
+}
+
 pub fn disableLineBuffering() void {
     const my_termios_type = c.termios;
     var my_termios: my_termios_type = undefined;
@@ -241,8 +276,16 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
     defer line.deinit();
     _ = try stdout_writer.write(prompt_str);
     while(true) {
+        std.time.sleep(10000); //slow down the reads...
         read_in = stdin_reader.readByte() catch 0;
-        if(read_in == 0) { continue; }
+        if(read_in == 0) {
+            if (glob_broken.*) {
+                    glob_broken.* = false;
+                    _ = line.toOwnedSlice();
+                    _ = try stdout_writer.print("\r\n" ++ prompt_str ++ "{s}", .{line.items});
+            }
+            continue; 
+        }
         switch(read_in){
             //Backspace
             '\x7f' => {
@@ -278,7 +321,6 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
                         //down
                         _ = try stdout_writer.write("\x1b[1000D\x1b[0K");
                         line.clearAndFree();
-                        //std.debug.print("got cmd: {s}\n", .{getCmdFromHistory(down)});
                         _ = try line.appendSlice(getCmdFromHistory(down));
                         _ = try stdout_writer.print("\x1b2K\r" ++ prompt_str ++  "{s}", .{line.items});
                         break :blk line.items;
@@ -314,7 +356,23 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
             0x20...0x7e => {
                 try line.append(read_in);
             },
-            else => {}
+            //EOT (Ctrl + D)
+            0x04 => {
+                _ = line.toOwnedSlice();
+                var cmd_list = std.ArrayList([] const u8).init(alloc);
+                _ = try stdout_writer.print("\r\n", .{});
+                defer cmd_list.deinit();
+                try cmd_list.append("quit");
+                return cmd_list.toOwnedSlice();
+            },
+            else => {
+                if (glob_broken.*) {
+                    glob_broken.* = false;
+                    _ = line.toOwnedSlice();
+                    _ = try stdout_writer.print("\r\n" ++ prompt_str ++ "{s}", .{line.items});
+                }
+                continue;
+            }
         }
     }
 }

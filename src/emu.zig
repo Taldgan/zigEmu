@@ -152,7 +152,8 @@ pub fn main() !void {
     for (buf) |_, i| {
         buf[i] = 0;
     }
-    var cpu = try icpu.initCpu(&buf, alloc);
+    var broken: bool = false;
+    var cpu = try icpu.initCpu(&buf, alloc, &broken);
 
     var safe = [_][]const u8{"r"};
     var prevResponse: [][]const u8 = &safe;
@@ -163,9 +164,12 @@ pub fn main() !void {
     icpu.setGlobAlloc(alloc);
     try icli.initHashMap(alloc, &cmd_list);
     try icli.loadCmdHistory();
+    icli.handle_sigint(&broken);
 
     while (true) {
-        var response: [][]const u8 = try icli.promptWithArrows(alloc);
+        var response: [][]const u8 = icli.promptWithArrows(alloc) catch {
+            continue;
+        };
         //Repeat prev command if only 'enter' is pressed...
         if (std.mem.eql(u8, response[0], "")) {
             try icli.parseCommands(prevResponse, cpu, true);

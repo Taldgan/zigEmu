@@ -41,6 +41,7 @@ pub const CPU = struct {
     cpm_hook: bool,
     status_print: bool,
     bps: std.ArrayList(Breakpoint),
+    broken: *bool,
 };
 
 pub fn setGlobAlloc(alloc: std.mem.Allocator) void {
@@ -74,7 +75,7 @@ pub fn cpmHookCmd(pCpu: *CPU, args: [][]const u8) void {
 pub fn loadCmd(pCpu: *CPU, args: [][]const u8) void {
     var mapLoc: u16 = 0;
     if (args.len < 2) {
-        _ = stdout.writer().print(colors.RED ++ "Need a file for load" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+        _ = stdout.writer().print(colors.RED ++ "'load' requires a file as an argument" ++ colors.DEFAULT ++ "\n", .{}) catch {};
         return;
     }
     if (args.len > 2) {
@@ -2601,6 +2602,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
     }
+
+    // Breakpoints
     for (cpu.bps.items) | bp, i |{
         if (bp.addr == cpu.pc) {
             if (bp.enabled) {
@@ -2610,6 +2613,13 @@ pub fn emulate(cpu: *CPU) bool {
                 return true;
             }
         }
+    }
+
+    //...or break with ctrl + c
+    if (cpu.broken.*) {
+        cpu.broken.* = false;
+        _ = stdout.writer().print(colors.GREEN ++ "\nBreak" ++ colors.DEFAULT ++ "\n", .{}) catch {};
+        return true;
     }
     return false;
 }
@@ -3846,7 +3856,7 @@ pub fn disassembleWholeProg(progBuf: []u8) void {
     }
 }
 
-pub fn initCpu(mem: []u8, alloc: std.mem.Allocator) !*CPU {
+pub fn initCpu(mem: []u8, alloc: std.mem.Allocator, broken: *bool) !*CPU {
     // cflags all set to defaults above, no need to initialize
     var cflags = try alloc.create(CPUFlags);
     cflags.z = 0;
@@ -3873,6 +3883,8 @@ pub fn initCpu(mem: []u8, alloc: std.mem.Allocator) !*CPU {
     cpu.status_print = false;
 
     cpu.bps = std.ArrayList(Breakpoint).init(alloc);
+
+    cpu.broken = broken;
 
     return cpu;
 }
