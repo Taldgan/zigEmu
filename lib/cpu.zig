@@ -102,14 +102,14 @@ pub fn loadCmd(pCpu: *CPU, args: [][]const u8) void {
         return;
     }
 
-    //Copy bytes into cpu memory
+    // Copy bytes into cpu memory
     for (&fileBuf, 0..) |byte, i| {
         pCpu.memory[i + mapLoc] = byte;
         if (i >= bytesRead)
             break;
     }
 
-    //PC should be set to location of mapped code
+    // PC should be set to location of mapped code
     pCpu.pc = mapLoc;
 
     _ = stdout.writer().print("\x1b[0;32mMapped file '{s}' into memory at address 0x{x:0>4}" ++ colors.DEFAULT ++ "\n", .{ args[1], mapLoc }) catch {};
@@ -169,7 +169,7 @@ pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
 }
 
 pub fn disassembleCmd(pCpu: *CPU, args: [][]const u8) void {
-    //Only way to implement local statics atm
+    // Only way to implement local statics atm
     const Static = struct {
         var tmp_pc: u16 = 0;
         var initialized: bool = false;
@@ -282,7 +282,7 @@ pub fn parity(result: u16) u1 {
         tmp = tmp >> 1;
         i += 1;
     }
-    //odd parity = '0', even parity = '1'
+    // odd parity = '0', even parity = '1'
     return @intFromBool(bit_count % 2 == 0);
 }
 
@@ -314,24 +314,24 @@ pub fn printCpuStatus(pCpu: *CPU) void {
     print("\n", .{});
 }
 
-///Func to emulate 8080 instructions
-//Return 'true' if break after emulate
+/// Func to emulate 8080 instructions
+// Return 'true' if break after emulate
 pub fn emulate(cpu: *CPU) bool {
     @setRuntimeSafety(false);
     var op: []u8 = cpu.memory[cpu.pc..(cpu.pc + 3)];
     switch (op[0]) {
         0x00 => {
-            //NOP
+            // NOP
             cpu.pc +%= 1;
         },
         0x01 => {
-            //LXI B, D16 (BC = D16)
+            // LXI B, D16 (BC = D16)
             cpu.b = op[2];
             cpu.c = op[1];
             cpu.pc +%= 3;
         },
         0x02 => {
-            //STAX B ((BE) = A)
+            // STAX B ((BE) = A)
             var bc: u16 = cpu.b;
             bc = bc << 8;
             bc +%= cpu.c;
@@ -340,7 +340,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x03 => {
-            //INX B (BC = BC + 1)
+            // INX B (BC = BC + 1)
             var bc: u16 = cpu.b;
             bc = bc << 8;
             bc +%= cpu.c;
@@ -353,7 +353,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x04 => {
-            //INR B (B = B + 1)
+            // INR B (B = B + 1)
             var result: u16 = cpu.b;
             result +%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -364,7 +364,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x05 => {
-            //DCR B (B = B - 1)
+            // DCR B (B = B - 1)
             var result: u16 = cpu.b;
             result -%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -375,12 +375,12 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x06 => {
-            //MVI B, D8 (B = D8)
+            // MVI B, D8 (B = D8)
             cpu.b = op[1];
             cpu.pc +%= 2;
         },
         0x07 => {
-            //RLC (A = (A << 1) | ((A & 0x80) >> 7) )
+            // RLC (A = (A << 1) | ((A & 0x80) >> 7) )
             var op1: u8 = cpu.a;
             var op2: u8 = (op1 & 0x80) >> 7;
             var result: u8 = (op1 << 1) | op2;
@@ -389,7 +389,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x09 => {
-            //DAD B (HL = HL + BC)
+            // DAD B (HL = HL + BC)
             var bc: u16 = cpu.b;
             bc = bc << 8;
             bc +%= cpu.c;
@@ -405,7 +405,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x0a => {
-            //LDAX B (A = (BC))
+            // LDAX B (A = (BC))
             var bc: u16 = cpu.b;
             bc = bc << 8;
             bc +%= cpu.c;
@@ -414,7 +414,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x0b => {
-            //DCX B (BC = BC - 1)
+            // DCX B (BC = BC - 1)
             var bc: u16 = cpu.b;
             bc = bc << 8;
             bc +%= cpu.c;
@@ -425,7 +425,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x0c => {
-            //INR C (C = C + 1)
+            // INR C (C = C + 1)
             var result: u16 = cpu.c;
             result +%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -436,7 +436,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x0d => {
-            //DCR C (C = C - 1)
+            // DCR C (C = C - 1)
             var result: u16 = cpu.c;
             result -%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -447,12 +447,12 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x0e => {
-            //MVI C, D8 (C = D8)
+            // MVI C, D8 (C = D8)
             cpu.c = op[1];
             cpu.pc +%= 2;
         },
         0x0f => {
-            //RRC (A = (A & 1 << 7) | (A >> 1) )
+            // RRC (A = (A & 1 << 7) | (A >> 1) )
             var op1: u8 = cpu.a;
             var result: u8 = (op1 & 1 << 7) | (op1 >> 1);
             cpu.a = result;
@@ -460,13 +460,13 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x11 => {
-            //LXI D, D16 (DE = D16)
+            // LXI D, D16 (DE = D16)
             cpu.d = op[2];
             cpu.e = op[1];
             cpu.pc +%= 3;
         },
         0x12 => {
-            //STAX D ((DE) = A)
+            // STAX D ((DE) = A)
             var de: u16 = cpu.d;
             de = de << 8;
             de +%= cpu.e;
@@ -475,7 +475,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x13 => {
-            //INX D (DE = DE + 1)
+            // INX D (DE = DE + 1)
             var de: u16 = cpu.d;
             de = de << 8;
             de +%= cpu.e;
@@ -487,7 +487,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x14 => {
-            //INR D (D = D + 1)
+            // INR D (D = D + 1)
             var result: u16 = cpu.d;
             result +%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -498,7 +498,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x15 => {
-            //DCR D (D = D - 1)
+            // DCR D (D = D - 1)
             var result: u16 = cpu.d;
             result -%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -509,12 +509,12 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x16 => {
-            //MVI D, D8 (D = D8)
+            // MVI D, D8 (D = D8)
             cpu.d = op[1];
             cpu.pc +%= 2;
         },
         0x17 => {
-            //RAL (A = (A << 1) | CY)
+            // RAL (A = (A << 1) | CY)
             var op1: u8 = cpu.a;
             var op2: u8 = @as(u8, cpu.cc.cy);
             var bit7: u8 = (op1 & 0x80) >> 7;
@@ -524,7 +524,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x19 => {
-            //DAD D (HL = HL + DE)
+            // DAD D (HL = HL + DE)
             var de: u16 = cpu.d;
             de = de << 8;
             de +%= cpu.e;
@@ -540,7 +540,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x1a => {
-            //LDAX D (A = (DE))
+            // LDAX D (A = (DE))
             var de: u16 = cpu.d;
             de = de << 8;
             de +%= cpu.e;
@@ -549,7 +549,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x1b => {
-            //DCX D (DE = DE - 1)
+            // DCX D (DE = DE - 1)
             var de: u16 = cpu.d;
             de = de << 8;
             de +%= cpu.e;
@@ -560,7 +560,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x1c => {
-            //INR E (E = E + 1)
+            // INR E (E = E + 1)
             var result: u16 = cpu.e;
             result +%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -571,7 +571,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x1d => {
-            //DCR E (E = E - 1)
+            // DCR E (E = E - 1)
             var result: u16 = cpu.e;
             result -%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -582,12 +582,12 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x1e => {
-            //MVI E, D8 (E = D8)
+            // MVI E, D8 (E = D8)
             cpu.e = op[1];
             cpu.pc +%= 2;
         },
         0x1f => {
-            //RAR (A = (CY << 7) | (A >> 1) )
+            // RAR (A = (CY << 7) | (A >> 1) )
             var op1: u8 = cpu.a;
             var op2: u8 = @as(u8, cpu.cc.cy);
             var result: u8 = (op2 << 7) | (op1 >> 1);
@@ -596,17 +596,17 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x20 => {
-            //RIM
+            // RIM
             unimplementedOpcode(op[0], cpu);
         },
         0x21 => {
-            //LXI H, D16 (HL = D16)
+            // LXI H, D16 (HL = D16)
             cpu.h = op[2];
             cpu.l = op[1];
             cpu.pc +%= 3;
         },
         0x22 => {
-            //STAX H ((HL) = A)
+            // STAX H ((HL) = A)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -615,7 +615,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x23 => {
-            //INX H (HL = HL + 1)
+            // INX H (HL = HL + 1)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -628,7 +628,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x24 => {
-            //INR H (H = H + 1)
+            // INR H (H = H + 1)
             var result: u16 = cpu.h;
             result +%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -639,7 +639,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x25 => {
-            //DCR H (H = H - 1)
+            // DCR H (H = H - 1)
             var result: u16 = cpu.h;
             result -%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -650,7 +650,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x26 => {
-            //MVI H, D8 (H = D8)
+            // MVI H, D8 (H = D8)
             cpu.h = op[1];
             cpu.pc +%= 2;
         },
@@ -658,7 +658,7 @@ pub fn emulate(cpu: *CPU) bool {
             unimplementedOpcode(op[0], cpu);
         },
         0x29 => {
-            //DAD H (HL = HL *%= 2)
+            // DAD H (HL = HL *%= 2)
             var hl: u17 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -670,7 +670,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x2a => {
-            //LHLD H (A = (HL))
+            // LHLD H (A = (HL))
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -679,7 +679,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
         },
         0x2b => {
-            //DCX H (HL = HL - 1)
+            // DCX H (HL = HL - 1)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -690,7 +690,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x2c => {
-            //INR L (L = L + 1)
+            // INR L (L = L + 1)
             var result: u16 = cpu.l;
             result +%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -701,7 +701,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x2d => {
-            //DCR L (L = L - 1)
+            // DCR L (L = L - 1)
             var result: u16 = cpu.l;
             result -%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -712,17 +712,17 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x2e => {
-            //MVI L, D8 (L = D8)
+            // MVI L, D8 (L = D8)
             cpu.l = op[1];
             cpu.pc +%= 2;
         },
         0x2f => {
-            //CMA (A = !A)
+            // CMA (A = !A)
             cpu.a = ~cpu.a;
             cpu.pc +%= 1;
         },
         0x31 => {
-            //LXI SP, D16 (SP = D16)
+            // LXI SP, D16 (SP = D16)
             var new_sp: u16 = op[2];
             new_sp = new_sp << 8;
             new_sp +%= op[1];
@@ -730,7 +730,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
         },
         0x32 => {
-            //STA addr ((addr) = A)
+            // STA addr ((addr) = A)
             var addr: u16 = op[2];
             addr = addr << 8;
             addr +%= op[1];
@@ -739,12 +739,12 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
         },
         0x33 => {
-            //INX SP (SP = SP + 1)
+            // INX SP (SP = SP + 1)
             cpu.sp +%= 1;
             cpu.pc +%= 1;
         },
         0x34 => {
-            //INR M ((HL) = (HL) + 1)
+            // INR M ((HL) = (HL) + 1)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -760,7 +760,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x35 => {
-            //DCR M ((HL) = (HL) - 1)
+            // DCR M ((HL) = (HL) - 1)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -776,7 +776,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x36 => {
-            //MVI M, D8 ((HL) = D8)
+            // MVI M, D8 ((HL) = D8)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -785,11 +785,11 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 2;
         },
         0x37 => {
-            //STC
+            // STC
             cpu.cc.cy = 1;
         },
         0x39 => {
-            //DAD SP (HL = HL + SP)
+            // DAD SP (HL = HL + SP)
             var hl: u17 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -801,7 +801,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x3a => {
-            //LDA addr (A = (addr))
+            // LDA addr (A = (addr))
             var addr: u16 = op[2];
             addr = addr << 8;
             addr +%= op[1];
@@ -810,12 +810,12 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
         },
         0x3b => {
-            //DCX SP (SP = SP - 1)
+            // DCX SP (SP = SP - 1)
             cpu.sp -%= 1;
             cpu.pc +%= 1;
         },
         0x3c => {
-            //INR A (A = A + 1)
+            // INR A (A = A + 1)
             var result: u16 = cpu.a;
             result +%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -826,7 +826,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x3d => {
-            //DCR A (A = A + 1)
+            // DCR A (A = A + 1)
             var result: u16 = cpu.a;
             result -%= 1;
             cpu.cc.z = @intFromBool(result == 0);
@@ -837,7 +837,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x3e => {
-            //MVI A, D8 (A = D8)
+            // MVI A, D8 (A = D8)
             cpu.a = op[1];
             cpu.pc +%= 2;
         },
@@ -845,37 +845,37 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.cc.cy = ~cpu.cc.cy;
         },
         0x40 => {
-            //MOV B, B (B = B)
+            // MOV B, B (B = B)
             cpu.b = cpu.b;
             cpu.pc +%= 1;
         },
         0x41 => {
-            //MOV B, C (B = C)
+            // MOV B, C (B = C)
             cpu.b = cpu.c;
             cpu.pc +%= 1;
         },
         0x42 => {
-            //MOV B, D (B = D)
+            // MOV B, D (B = D)
             cpu.b = cpu.d;
             cpu.pc +%= 1;
         },
         0x43 => {
-            //MOV B, E (B = E)
+            // MOV B, E (B = E)
             cpu.b = cpu.e;
             cpu.pc +%= 1;
         },
         0x44 => {
-            //MOV B, H (B = H)
+            // MOV B, H (B = H)
             cpu.b = cpu.h;
             cpu.pc +%= 1;
         },
         0x45 => {
-            //MOV B, L (B = L)
+            // MOV B, L (B = L)
             cpu.b = cpu.l;
             cpu.pc +%= 1;
         },
         0x46 => {
-            //MOV B, M (B = (HL))
+            // MOV B, M (B = (HL))
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -884,42 +884,42 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x47 => {
-            //MOV B, A (B = A)
+            // MOV B, A (B = A)
             cpu.b = cpu.a;
             cpu.pc +%= 1;
         },
         0x48 => {
-            //MOV C, B (C = B)
+            // MOV C, B (C = B)
             cpu.c = cpu.b;
             cpu.pc +%= 1;
         },
         0x49 => {
-            //MOV C, C (C = C)
+            // MOV C, C (C = C)
             cpu.c = cpu.c;
             cpu.pc +%= 1;
         },
         0x4a => {
-            //MOV C, D (C = D)
+            // MOV C, D (C = D)
             cpu.c = cpu.d;
             cpu.pc +%= 1;
         },
         0x4b => {
-            //MOV C, E (C = E)
+            // MOV C, E (C = E)
             cpu.c = cpu.e;
             cpu.pc +%= 1;
         },
         0x4c => {
-            //MOV C, H (C = H)
+            // MOV C, H (C = H)
             cpu.c = cpu.h;
             cpu.pc +%= 1;
         },
         0x4d => {
-            //MOV C, L (C = L)
+            // MOV C, L (C = L)
             cpu.c = cpu.l;
             cpu.pc +%= 1;
         },
         0x4e => {
-            //MOV C, M (C = (HL))
+            // MOV C, M (C = (HL))
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -928,42 +928,42 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x4f => {
-            //MOV C, A (C = A)
+            // MOV C, A (C = A)
             cpu.c = cpu.a;
             cpu.pc +%= 1;
         },
         0x50 => {
-            //MOV D, B (D = B)
+            // MOV D, B (D = B)
             cpu.d = cpu.b;
             cpu.pc +%= 1;
         },
         0x51 => {
-            //MOV D, C (D = C)
+            // MOV D, C (D = C)
             cpu.d = cpu.c;
             cpu.pc +%= 1;
         },
         0x52 => {
-            //MOV D, D (D = D)
+            // MOV D, D (D = D)
             cpu.d = cpu.d;
             cpu.pc +%= 1;
         },
         0x53 => {
-            //MOV D, E (D = E)
+            // MOV D, E (D = E)
             cpu.d = cpu.e;
             cpu.pc +%= 1;
         },
         0x54 => {
-            //MOV D, H (D = H)
+            // MOV D, H (D = H)
             cpu.d = cpu.h;
             cpu.pc +%= 1;
         },
         0x55 => {
-            //MOV D, L (D = L)
+            // MOV D, L (D = L)
             cpu.d = cpu.l;
             cpu.pc +%= 1;
         },
         0x56 => {
-            //MOV D, M (D = (HL))
+            // MOV D, M (D = (HL))
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -972,42 +972,42 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x57 => {
-            //MOV D, A (D = A)
+            // MOV D, A (D = A)
             cpu.d = cpu.a;
             cpu.pc +%= 1;
         },
         0x58 => {
-            //MOV E, B (E = B)
+            // MOV E, B (E = B)
             cpu.e = cpu.b;
             cpu.pc +%= 1;
         },
         0x59 => {
-            //MOV E, C (E = C)
+            // MOV E, C (E = C)
             cpu.e = cpu.c;
             cpu.pc +%= 1;
         },
         0x5a => {
-            //MOV E, D (E = D)
+            // MOV E, D (E = D)
             cpu.e = cpu.d;
             cpu.pc +%= 1;
         },
         0x5b => {
-            //MOV E, E (E = E)
+            // MOV E, E (E = E)
             cpu.e = cpu.e;
             cpu.pc +%= 1;
         },
         0x5c => {
-            //MOV E, H (E = H)
+            // MOV E, H (E = H)
             cpu.e = cpu.h;
             cpu.pc +%= 1;
         },
         0x5d => {
-            //MOV E, L (E = L)
+            // MOV E, L (E = L)
             cpu.e = cpu.l;
             cpu.pc +%= 1;
         },
         0x5e => {
-            //MOV E, M (E = (HL))
+            // MOV E, M (E = (HL))
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -1016,42 +1016,42 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x5f => {
-            //MOV E, A (E = A)
+            // MOV E, A (E = A)
             cpu.e = cpu.a;
             cpu.pc +%= 1;
         },
         0x60 => {
-            //MOV H, B (H = B)
+            // MOV H, B (H = B)
             cpu.h = cpu.b;
             cpu.pc +%= 1;
         },
         0x61 => {
-            //MOV H, C (H = C)
+            // MOV H, C (H = C)
             cpu.h = cpu.c;
             cpu.pc +%= 1;
         },
         0x62 => {
-            //MOV H, D (H = D)
+            // MOV H, D (H = D)
             cpu.h = cpu.d;
             cpu.pc +%= 1;
         },
         0x63 => {
-            //MOV H, E (H = E)
+            // MOV H, E (H = E)
             cpu.h = cpu.e;
             cpu.pc +%= 1;
         },
         0x64 => {
-            //MOV H, H (H = H)
+            // MOV H, H (H = H)
             cpu.h = cpu.h;
             cpu.pc +%= 1;
         },
         0x65 => {
-            //MOV H, L (H = L)
+            // MOV H, L (H = L)
             cpu.h = cpu.l;
             cpu.pc +%= 1;
         },
         0x66 => {
-            //MOV H, M (H = (HL))
+            // MOV H, M (H = (HL))
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -1060,42 +1060,42 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x67 => {
-            //MOV H, A (H = A)
+            // MOV H, A (H = A)
             cpu.h = cpu.a;
             cpu.pc +%= 1;
         },
         0x68 => {
-            //MOV L, B (L = B)
+            // MOV L, B (L = B)
             cpu.l = cpu.b;
             cpu.pc +%= 1;
         },
         0x69 => {
-            //MOV L, C (L = C)
+            // MOV L, C (L = C)
             cpu.l = cpu.c;
             cpu.pc +%= 1;
         },
         0x6a => {
-            //MOV L, D (L = D)
+            // MOV L, D (L = D)
             cpu.l = cpu.d;
             cpu.pc +%= 1;
         },
         0x6b => {
-            //MOV L, E (L = E)
+            // MOV L, E (L = E)
             cpu.l = cpu.e;
             cpu.pc +%= 1;
         },
         0x6c => {
-            //MOV L, H (L = H)
+            // MOV L, H (L = H)
             cpu.l = cpu.h;
             cpu.pc +%= 1;
         },
         0x6d => {
-            //MOV L, L (L = L)
+            // MOV L, L (L = L)
             cpu.l = cpu.l;
             cpu.pc +%= 1;
         },
         0x6e => {
-            //MOV L, M (L = (HL))
+            // MOV L, M (L = (HL))
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -1104,12 +1104,12 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x6f => {
-            //MOV L, A (L = A)
+            // MOV L, A (L = A)
             cpu.l = cpu.a;
             cpu.pc +%= 1;
         },
         0x70 => {
-            //MOV M, B ((HL) = B)
+            // MOV M, B ((HL) = B)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -1117,7 +1117,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x71 => {
-            //MOV M, C ((HL) = C)
+            // MOV M, C ((HL) = C)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -1125,7 +1125,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x72 => {
-            //MOV M, D ((HL) = D)
+            // MOV M, D ((HL) = D)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -1133,7 +1133,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x73 => {
-            //MOV M, E ((HL) = E)
+            // MOV M, E ((HL) = E)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -1141,7 +1141,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x74 => {
-            //MOV M, H ((HL) = H)
+            // MOV M, H ((HL) = H)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -1149,7 +1149,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x75 => {
-            //MOV M, L ((HL) = L)
+            // MOV M, L ((HL) = L)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -1157,11 +1157,11 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x76 => {
-            //HLT
+            // HLT
             unimplementedOpcode(op[0], cpu);
         },
         0x77 => {
-            //MOV M, A ((HL) = A)
+            // MOV M, A ((HL) = A)
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -1169,37 +1169,37 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x78 => {
-            //MOV A, B (A = B)
+            // MOV A, B (A = B)
             cpu.a = cpu.b;
             cpu.pc +%= 1;
         },
         0x79 => {
-            //MOV A, C (A = C)
+            // MOV A, C (A = C)
             cpu.a = cpu.c;
             cpu.pc +%= 1;
         },
         0x7a => {
-            //MOV A, D (A = D)
+            // MOV A, D (A = D)
             cpu.a = cpu.d;
             cpu.pc +%= 1;
         },
         0x7b => {
-            //MOV A, E (A = E)
+            // MOV A, E (A = E)
             cpu.a = cpu.e;
             cpu.pc +%= 1;
         },
         0x7c => {
-            //MOV A, H (A = H)
+            // MOV A, H (A = H)
             cpu.a = cpu.h;
             cpu.pc +%= 1;
         },
         0x7d => {
-            //MOV A, L (A = L)
+            // MOV A, L (A = L)
             cpu.a = cpu.l;
             cpu.pc +%= 1;
         },
         0x7e => {
-            //MOV A, M (A = (HL))
+            // MOV A, M (A = (HL))
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
@@ -1208,12 +1208,12 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x7f => {
-            //MOV A, A (A = A)
+            // MOV A, A (A = A)
             cpu.a = cpu.a;
             cpu.pc +%= 1;
         },
         0x80 => {
-            //ADD B (A = A + B)
+            // ADD B (A = A + B)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 + op2;
@@ -1225,7 +1225,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x81 => {
-            //ADD C (A = A + C)
+            // ADD C (A = A + C)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 + op2;
@@ -1237,7 +1237,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x82 => {
-            //ADD D (A = A + D)
+            // ADD D (A = A + D)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 + op2;
@@ -1249,7 +1249,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x83 => {
-            //ADD E (A = A + E)
+            // ADD E (A = A + E)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var result: u16 = op1 + op2;
@@ -1261,7 +1261,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x84 => {
-            //ADD H (A = A + H)
+            // ADD H (A = A + H)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 + op2;
@@ -1273,7 +1273,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x85 => {
-            //ADD L (A = A + L)
+            // ADD L (A = A + L)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 + op2;
@@ -1285,8 +1285,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x86 => {
-            //ADD M (A = A + (HL))
-            //Dereference loc of HL, add that val
+            // ADD M (A = A + (HL))
+            // Dereference loc of HL, add that val
             var op1: u16 = cpu.a;
             var hl: u16 = cpu.h;
             hl = hl << 8;
@@ -1302,7 +1302,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x87 => {
-            //ADD A (A = A + A)
+            // ADD A (A = A + A)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 + op2;
@@ -1314,7 +1314,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x88 => {
-            //ADC B (A = A + B + CY)
+            // ADC B (A = A + B + CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var op3: u16 = cpu.cc.cy;
@@ -1327,7 +1327,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x89 => {
-            //ADC C (A = A + C + CY)
+            // ADC C (A = A + C + CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var op3: u16 = cpu.cc.cy;
@@ -1340,7 +1340,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x8a => {
-            //ADC D (A = A + D + CY)
+            // ADC D (A = A + D + CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var op3: u16 = cpu.cc.cy;
@@ -1353,7 +1353,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x8b => {
-            //ADC E (A = A + E + CY)
+            // ADC E (A = A + E + CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var op3: u16 = cpu.cc.cy;
@@ -1366,7 +1366,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x8c => {
-            //ADC H (A = A + H + CY)
+            // ADC H (A = A + H + CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var op3: u16 = cpu.cc.cy;
@@ -1379,7 +1379,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x8d => {
-            //ADC L (A = A + L + CY)
+            // ADC L (A = A + L + CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var op3: u16 = cpu.cc.cy;
@@ -1392,8 +1392,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x8e => {
-            //ADC M (A = A + (HL) + CY)
-            //Dereference loc of HL, add that val
+            // ADC M (A = A + (HL) + CY)
+            // Dereference loc of HL, add that val
             var op1: u16 = cpu.a;
             var hl: u16 = cpu.h;
             hl = hl << 8;
@@ -1410,7 +1410,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x8f => {
-            //ADC A (A = A + A + CY)
+            // ADC A (A = A + A + CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var op3: u16 = cpu.cc.cy;
@@ -1423,7 +1423,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x90 => {
-            //SUB B (A = A - B)
+            // SUB B (A = A - B)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 - op2;
@@ -1435,7 +1435,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x91 => {
-            //SUB C (A = A - C)
+            // SUB C (A = A - C)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 - op2;
@@ -1447,7 +1447,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x92 => {
-            //SUB D (A = A - D)
+            // SUB D (A = A - D)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 - op2;
@@ -1459,7 +1459,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x93 => {
-            //SUB E (A = A - E)
+            // SUB E (A = A - E)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var result: u16 = op1 - op2;
@@ -1471,7 +1471,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x94 => {
-            //SUB H (A = A - H)
+            // SUB H (A = A - H)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 - op2;
@@ -1483,7 +1483,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x95 => {
-            //SUB L (A = A - L)
+            // SUB L (A = A - L)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 - op2;
@@ -1495,8 +1495,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x96 => {
-            //SUB M (A = A - (HL))
-            //Dereference loc of HL, add that val
+            // SUB M (A = A - (HL))
+            // Dereference loc of HL, add that val
             var op1: u16 = cpu.a;
             var hl: u16 = cpu.h;
             hl = hl << 8;
@@ -1512,7 +1512,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x97 => {
-            //SUB A (A = A - A)
+            // SUB A (A = A - A)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 - op2;
@@ -1524,7 +1524,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x98 => {
-            //SBB B (A = A - B - CY)
+            // SBB B (A = A - B - CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var op3: u16 = cpu.cc.cy;
@@ -1537,7 +1537,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x99 => {
-            //SBB C (A = A - C - CY)
+            // SBB C (A = A - C - CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var op3: u16 = cpu.cc.cy;
@@ -1550,7 +1550,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x9a => {
-            //SBB D (A = A - D - CY)
+            // SBB D (A = A - D - CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var op3: u16 = cpu.cc.cy;
@@ -1563,7 +1563,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x9b => {
-            //SBB E (A = A - E - CY)
+            // SBB E (A = A - E - CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var op3: u16 = cpu.cc.cy;
@@ -1576,7 +1576,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x9c => {
-            //SBB H (A = A - H - CY)
+            // SBB H (A = A - H - CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var op3: u16 = cpu.cc.cy;
@@ -1589,7 +1589,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x9d => {
-            //SBB L (A = A - L - CY)
+            // SBB L (A = A - L - CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var op3: u16 = cpu.cc.cy;
@@ -1602,8 +1602,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x9e => {
-            //SBB M (A = A - (HL) - CY)
-            //Dereference loc of HL
+            // SBB M (A = A - (HL) - CY)
+            // Dereference loc of HL
             var op1: u16 = cpu.a;
             var hl: u16 = cpu.h;
             hl = hl << 8;
@@ -1620,7 +1620,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0x9f => {
-            //SBB A (A = A - A - CY)
+            // SBB A (A = A - A - CY)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var op3: u16 = cpu.cc.cy;
@@ -1633,7 +1633,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xa0 => {
-            //ANA B (A = A & B)
+            // ANA B (A = A & B)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 & op2;
@@ -1645,7 +1645,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xa1 => {
-            //ANA C (A = A & C)
+            // ANA C (A = A & C)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 & op2;
@@ -1657,7 +1657,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xa2 => {
-            //ANA D (A = A & D)
+            // ANA D (A = A & D)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 & op2;
@@ -1669,7 +1669,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xa3 => {
-            //ANA E (A = A & E)
+            // ANA E (A = A & E)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var result: u16 = op1 & op2;
@@ -1681,7 +1681,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xa4 => {
-            //ANA H (A = A & H)
+            // ANA H (A = A & H)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 & op2;
@@ -1693,7 +1693,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xa5 => {
-            //ANA L (A = A & L)
+            // ANA L (A = A & L)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 & op2;
@@ -1705,8 +1705,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xa6 => {
-            //ANA M (A = A & (HL))
-            //Dereference loc of HL
+            // ANA M (A = A & (HL))
+            // Dereference loc of HL
             var op1: u16 = cpu.a;
             var hl: u16 = cpu.h;
             hl = hl << 8;
@@ -1722,7 +1722,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xa7 => {
-            //ANA A (A = A & A)
+            // ANA A (A = A & A)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 & op2;
@@ -1734,7 +1734,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xa8 => {
-            //XRA B (A = A ^ B)
+            // XRA B (A = A ^ B)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 ^ op2;
@@ -1746,7 +1746,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xa9 => {
-            //XRA C (A = A ^ C)
+            // XRA C (A = A ^ C)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 ^ op2;
@@ -1758,7 +1758,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xaa => {
-            //XRA D (A = A ^ D)
+            // XRA D (A = A ^ D)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 ^ op2;
@@ -1770,7 +1770,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xab => {
-            //XRA E (A = A ^ E)
+            // XRA E (A = A ^ E)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var result: u16 = op1 ^ op2;
@@ -1782,7 +1782,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xac => {
-            //XRA H (A = A ^ H)
+            // XRA H (A = A ^ H)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 ^ op2;
@@ -1794,7 +1794,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xad => {
-            //XRA L (A = A ^ L)
+            // XRA L (A = A ^ L)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 ^ op2;
@@ -1806,7 +1806,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xae => {
-            //XRA M (A = A ^ (HL))
+            // XRA M (A = A ^ (HL))
             var op1: u16 = cpu.a;
             var hl: u16 = cpu.h;
             hl = hl << 8;
@@ -1822,7 +1822,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xaf => {
-            //XRA A (A = A ^ A)
+            // XRA A (A = A ^ A)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 ^ op2;
@@ -1834,7 +1834,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xb0 => {
-            //ORA B (A = A | B)
+            // ORA B (A = A | B)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 | op2;
@@ -1846,7 +1846,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xb1 => {
-            //ORA C (A = A | C)
+            // ORA C (A = A | C)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 | op2;
@@ -1858,7 +1858,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xb2 => {
-            //ORA D (A = A | D)
+            // ORA D (A = A | D)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 | op2;
@@ -1870,7 +1870,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xb3 => {
-            //ORA E (A = A | E)
+            // ORA E (A = A | E)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var result: u16 = op1 | op2;
@@ -1882,7 +1882,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xb4 => {
-            //ORA H (A = A | H)
+            // ORA H (A = A | H)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 | op2;
@@ -1894,7 +1894,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xb5 => {
-            //ORA L (A = A | L)
+            // ORA L (A = A | L)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 | op2;
@@ -1906,7 +1906,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xb6 => {
-            //ORA M (A = A | (HL))
+            // ORA M (A = A | (HL))
             var op1: u16 = cpu.a;
             var hl: u16 = cpu.h;
             hl = hl << 8;
@@ -1922,7 +1922,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xb7 => {
-            //ORA A (A = A | A)
+            // ORA A (A = A | A)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 | op2;
@@ -1934,7 +1934,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xb8 => {
-            //CMP B (FLAGS = A - B)
+            // CMP B (FLAGS = A - B)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 - op2;
@@ -1945,7 +1945,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xb9 => {
-            //CMP C (FLAGS = A - C)
+            // CMP C (FLAGS = A - C)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 - op2;
@@ -1956,7 +1956,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xba => {
-            //CMP D (FLAGS = A - D)
+            // CMP D (FLAGS = A - D)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 - op2;
@@ -1967,7 +1967,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xbb => {
-            //CMP E (FLAGS = A - E)
+            // CMP E (FLAGS = A - E)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 - op2;
@@ -1978,7 +1978,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xbc => {
-            //CMP H (FLAGS = A - H)
+            // CMP H (FLAGS = A - H)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 - op2;
@@ -1989,7 +1989,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xbd => {
-            //CMP L (FLAGS = A - L)
+            // CMP L (FLAGS = A - L)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 - op2;
@@ -2000,8 +2000,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xbe => {
-            //CMP M (FLAGS = A - (HL))
-            //Dereference loc of HL, add that val
+            // CMP M (FLAGS = A - (HL))
+            // Dereference loc of HL, add that val
             var op1: u16 = cpu.a;
             var hl: u16 = cpu.h;
             hl = hl << 8;
@@ -2016,7 +2016,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xbf => {
-            //CMP A (FLAGS = A - A)
+            // CMP A (FLAGS = A - A)
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 - op2;
@@ -2027,13 +2027,13 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xc0 => {
-            //RNZ
+            // RNZ
             if (cpu.cc.z == 0) {
                 var jmp_to: u16 = cpu.memory[cpu.sp + 1];
                 jmp_to = jmp_to << 8;
                 jmp_to +%= cpu.memory[cpu.sp];
 
-                //Increment SP, jump
+                // Increment SP, jump
                 cpu.sp +%= 2;
                 cpu.pc = jmp_to;
             } else {
@@ -2041,14 +2041,14 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xc1 => {
-            //POP B (C = (SP), B = (SP +1), SP +%= 2)
+            // POP B (C = (SP), B = (SP +1), SP +%= 2)
             cpu.c = cpu.memory[cpu.sp];
             cpu.b = cpu.memory[cpu.sp + 1];
             cpu.sp +%= 2;
             cpu.pc +%= 1;
         },
         0xc2 => {
-            //JNZ addr
+            // JNZ addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
@@ -2060,29 +2060,29 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xc3 => {
-            //JMP addr
+            // JMP addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
             cpu.pc = jmp_to;
         },
         0xc4 => {
-            //CNZ addr
+            // CNZ addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
             cpu.pc +%= 3;
             if (cpu.cc.z == 0) {
-                //Write ret addr
+                // Write ret addr
                 cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
                 cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
-                //Decrement SP, jump
+                // Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
             }
         },
         0xc5 => {
-            //PUSH B ((SP-1) = B, (SP-2) = C, SP -%= 2)
+            // PUSH B ((SP-1) = B, (SP-2) = C, SP -%= 2)
             cpu.memory[cpu.sp - 1] = cpu.b;
             cpu.memory[cpu.sp - 2] = cpu.c;
             cpu.sp -%= 2;
@@ -2095,13 +2095,13 @@ pub fn emulate(cpu: *CPU) bool {
             unimplementedOpcode(op[0], cpu);
         },
         0xc8 => {
-            //RZ
+            // RZ
             if (cpu.cc.z == 1) {
                 var jmp_to: u16 = cpu.memory[cpu.sp + 1];
                 jmp_to = jmp_to << 8;
                 jmp_to +%= cpu.memory[cpu.sp];
 
-                //Increment SP, jump
+                // Increment SP, jump
                 cpu.sp +%= 2;
                 cpu.pc = jmp_to;
             } else {
@@ -2109,17 +2109,17 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xc9 => {
-            //RET
+            // RET
             var jmp_to: u16 = cpu.memory[cpu.sp + 1];
             jmp_to = jmp_to << 8;
             jmp_to +%= cpu.memory[cpu.sp];
 
-            //Increment SP, jump
+            // Increment SP, jump
             cpu.sp +%= 2;
             cpu.pc = jmp_to;
         },
         0xca => {
-            //JZ addr
+            // JZ addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
@@ -2131,22 +2131,22 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xcc => {
-            //CZ addr
+            // CZ addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
             cpu.pc +%= 3;
             if (cpu.cc.z == 1) {
-                //Write ret addr
+                // Write ret addr
                 cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
                 cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
-                //Decrement SP, jump
+                // Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
             }
         },
         0xcd => {
-            //CALL addr
+            // CALL addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
@@ -2163,11 +2163,11 @@ pub fn emulate(cpu: *CPU) bool {
                 }
                 cpu.pc +%= 3;
             } else {
-                //Write ret addr
+                // Write ret addr
                 cpu.pc +%= 3;
                 cpu.memory[cpu.sp -% 2] = @as(u8, @truncate(cpu.pc));
                 cpu.memory[cpu.sp -% 1] = @as(u8, @truncate((cpu.pc >> 8)));
-                //Decrement SP, jump
+                // Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
             }
@@ -2179,13 +2179,13 @@ pub fn emulate(cpu: *CPU) bool {
             unimplementedOpcode(op[0], cpu);
         },
         0xd0 => {
-            //RNC
+            // RNC
             if (cpu.cc.cy == 0) {
                 var jmp_to: u16 = cpu.memory[cpu.sp + 1];
                 jmp_to = jmp_to << 8;
                 jmp_to +%= cpu.memory[cpu.sp];
 
-                //Increment SP, jump
+                // Increment SP, jump
                 cpu.sp +%= 2;
                 cpu.pc = jmp_to;
             } else {
@@ -2193,14 +2193,14 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xd1 => {
-            //POP D (E = (SP), D = (SP +1), SP +%= 2)
+            // POP D (E = (SP), D = (SP +1), SP +%= 2)
             cpu.e = cpu.memory[cpu.sp];
             cpu.d = cpu.memory[cpu.sp + 1];
             cpu.sp +%= 2;
             cpu.pc +%= 1;
         },
         0xd2 => {
-            //JNC addr
+            // JNC addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
@@ -2215,22 +2215,22 @@ pub fn emulate(cpu: *CPU) bool {
             unimplementedOpcode(op[0], cpu);
         },
         0xd4 => {
-            //CNC addr
+            // CNC addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
             cpu.pc +%= 3;
             if (cpu.cc.cy == 0) {
-                //Write ret addr
+                // Write ret addr
                 cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
                 cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
-                //Decrement SP, jump
+                // Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
             }
         },
         0xd5 => {
-            //PUSH D ((SP-1) = D, (SP-2) = E, SP -%= 2)
+            // PUSH D ((SP-1) = D, (SP-2) = E, SP -%= 2)
             cpu.memory[cpu.sp - 1] = cpu.d;
             cpu.memory[cpu.sp - 2] = cpu.e;
             cpu.sp -%= 2;
@@ -2243,13 +2243,13 @@ pub fn emulate(cpu: *CPU) bool {
             unimplementedOpcode(op[0], cpu);
         },
         0xd8 => {
-            //RC
+            // RC
             if (cpu.cc.cy == 1) {
                 var jmp_to: u16 = cpu.memory[cpu.sp + 1];
                 jmp_to = jmp_to << 8;
                 jmp_to +%= cpu.memory[cpu.sp];
 
-                //Increment SP, jump
+                // Increment SP, jump
                 cpu.sp +%= 2;
                 cpu.pc = jmp_to;
             } else {
@@ -2257,7 +2257,7 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xda => {
-            //JC addr
+            // JC addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
@@ -2272,16 +2272,16 @@ pub fn emulate(cpu: *CPU) bool {
             unimplementedOpcode(op[0], cpu);
         },
         0xdc => {
-            //CC addr
+            // CC addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
             cpu.pc +%= 3;
             if (cpu.cc.cy == 1) {
-                //Write ret addr
+                // Write ret addr
                 cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
                 cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
-                //Decrement SP, jump
+                // Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
             }
@@ -2293,13 +2293,13 @@ pub fn emulate(cpu: *CPU) bool {
             unimplementedOpcode(op[0], cpu);
         },
         0xe0 => {
-            //RPO
+            // RPO
             if (cpu.cc.p == 0) {
                 var jmp_to: u16 = cpu.memory[cpu.sp + 1];
                 jmp_to = jmp_to << 8;
                 jmp_to +%= cpu.memory[cpu.sp];
 
-                //Increment SP, jump
+                // Increment SP, jump
                 cpu.sp +%= 2;
                 cpu.pc = jmp_to;
             } else {
@@ -2307,14 +2307,14 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xe1 => {
-            //POP H (L = (SP), H = (SP +1), SP +%= 2)
+            // POP H (L = (SP), H = (SP +1), SP +%= 2)
             cpu.l = cpu.memory[cpu.sp];
             cpu.h = cpu.memory[cpu.sp + 1];
             cpu.sp +%= 2;
             cpu.pc +%= 1;
         },
         0xe2 => {
-            //JPO addr
+            // JPO addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
@@ -2326,7 +2326,7 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xe3 => {
-            //XTHL
+            // XTHL
             var h: u8 = cpu.h;
             var l: u8 = cpu.l;
             var sp1: u8 = cpu.memory[cpu.sp];
@@ -2339,36 +2339,36 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xe4 => {
-            //CPO addr
+            // CPO addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
             cpu.pc +%= 3;
             if (cpu.cc.p == 0) {
-                //Write ret addr
+                // Write ret addr
                 cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
                 cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
-                //Decrement SP, jump
+                // Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
             }
         },
         0xe5 => {
-            //PUSH H ((SP-1) = H, (SP-2) = L, SP -%= 2)
+            // PUSH H ((SP-1) = H, (SP-2) = L, SP -%= 2)
             cpu.memory[cpu.sp - 1] = cpu.h;
             cpu.memory[cpu.sp - 2] = cpu.l;
             cpu.sp -%= 2;
             cpu.pc +%= 1;
         },
         0xe6 => {
-            //ANI D8 (A = A & D8)
+            // ANI D8 (A = A & D8)
             var op1: u16 = cpu.a;
             var op2: u16 = op[1];
             var result: u16 = op1 & op2;
             cpu.a = @as(u8, @truncate(result));
             cpu.cc.z = @intFromBool(result == 0);
             cpu.cc.s = @intFromBool(result & 0x80 != 0);
-            //ANI clears carry bit
+            // ANI clears carry bit
             cpu.cc.cy = 0;
             cpu.cc.p = parity(result);
             cpu.pc +%= 2;
@@ -2377,13 +2377,13 @@ pub fn emulate(cpu: *CPU) bool {
             unimplementedOpcode(op[0], cpu);
         },
         0xe8 => {
-            //RPE
+            // RPE
             if (cpu.cc.p == 1) {
                 var jmp_to: u16 = cpu.memory[cpu.sp + 1];
                 jmp_to = jmp_to << 8;
                 jmp_to +%= cpu.memory[cpu.sp];
 
-                //Increment SP, jump
+                // Increment SP, jump
                 cpu.sp +%= 2;
                 cpu.pc = jmp_to;
             } else {
@@ -2394,7 +2394,7 @@ pub fn emulate(cpu: *CPU) bool {
             unimplementedOpcode(op[0], cpu);
         },
         0xea => {
-            //JPE addr
+            // JPE addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
@@ -2406,7 +2406,7 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xeb => {
-            //XCHG (DE <-> HL)
+            // XCHG (DE <-> HL)
             var de: u16 = cpu.d;
             de = de << 8;
             de +%= cpu.e;
@@ -2424,16 +2424,16 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xec => {
-            //CPE addr
+            // CPE addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
             cpu.pc +%= 3;
             if (cpu.cc.p == 1) {
-                //Write ret addr
+                // Write ret addr
                 cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
                 cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
-                //Decrement SP, jump
+                // Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
             }
@@ -2445,13 +2445,13 @@ pub fn emulate(cpu: *CPU) bool {
             unimplementedOpcode(op[0], cpu);
         },
         0xf0 => {
-            //RP
+            // RP
             if (cpu.cc.s == 0) {
                 var jmp_to: u16 = cpu.memory[cpu.sp + 1];
                 jmp_to = jmp_to << 8;
                 jmp_to +%= cpu.memory[cpu.sp];
 
-                //Increment SP, jump
+                // Increment SP, jump
                 cpu.sp +%= 2;
                 cpu.pc = jmp_to;
             } else {
@@ -2459,7 +2459,7 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xf1 => {
-            //POP PSW (FLAGS = (SP), A = (SP +1), SP +%= 2)
+            // POP PSW (FLAGS = (SP), A = (SP +1), SP +%= 2)
             var flags: u8 = cpu.memory[cpu.sp];
             cpu.cc.z = @intFromBool((flags & 1) == 1);
             cpu.cc.s = @intFromBool((flags & 2) == 2);
@@ -2472,7 +2472,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xf2 => {
-            //JP addr
+            // JP addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
@@ -2484,27 +2484,27 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xf3 => {
-            //unimplementedOpcode(op[0], cpu);
-            //Disables interupts?
+            // unimplementedOpcode(op[0], cpu);
+            // Disables interupts?
             cpu.pc +%= 1;
         },
         0xf4 => {
-            //CP addr
+            // CP addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
             cpu.pc +%= 3;
             if (cpu.cc.s == 0) {
-                //Write ret addr
+                // Write ret addr
                 cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
                 cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
-                //Decrement SP, jump
+                // Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
             }
         },
         0xf5 => {
-            //PUSH PSW ((SP-2) = FLAGS, (SP-1) = A, SP -%= 2)
+            // PUSH PSW ((SP-2) = FLAGS, (SP-1) = A, SP -%= 2)
             var flags: u8 = 0;
             flags = flags | (@as(u8, cpu.cc.ac) << 4);
             flags = flags | (@as(u8, cpu.cc.cy) << 3);
@@ -2518,7 +2518,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xf6 => {
-            //ORI D8 (A = A | D8)
+            // ORI D8 (A = A | D8)
             cpu.a = cpu.a | op[1];
             cpu.pc +%= 2;
         },
@@ -2526,13 +2526,13 @@ pub fn emulate(cpu: *CPU) bool {
             unimplementedOpcode(op[0], cpu);
         },
         0xf8 => {
-            //RM
+            // RM
             if (cpu.cc.s == 1) {
                 var jmp_to: u16 = cpu.memory[cpu.sp + 1];
                 jmp_to = jmp_to << 8;
                 jmp_to +%= cpu.memory[cpu.sp];
 
-                //Increment SP, jump
+                // Increment SP, jump
                 cpu.sp +%= 2;
                 cpu.pc = jmp_to;
             } else {
@@ -2540,7 +2540,7 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xf9 => {
-            //SPHL (SP = HL)
+            // SPHL (SP = HL)
             var new_sp: u16 = cpu.h;
             new_sp = new_sp << 8;
             new_sp +%= cpu.l;
@@ -2548,7 +2548,7 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 1;
         },
         0xfa => {
-            //JM addr
+            // JM addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
@@ -2560,27 +2560,27 @@ pub fn emulate(cpu: *CPU) bool {
             }
         },
         0xfb => {
-            //unimplementedOpcode(op[0], cpu);
-            //Enables interupts?
+            // unimplementedOpcode(op[0], cpu);
+            // Enables interupts?
             cpu.pc +%= 1;
         },
         0xfc => {
-            //CM addr
+            // CM addr
             var jmp_to: u16 = op[2];
             jmp_to = jmp_to << 8;
             jmp_to +%= op[1];
             cpu.pc +%= 3;
             if (cpu.cc.s == 1) {
-                //Write ret addr
+                // Write ret addr
                 cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
                 cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
-                //Decrement SP, jump
+                // Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
             }
         },
         0xfe => {
-            //CPI D8 (A - D8)
+            // CPI D8 (A - D8)
             var result: u16 = cpu.a -% op[1];
             cpu.cc.z = @intFromBool(result == 0);
             cpu.cc.s = @intFromBool(result & 0x80 != 0);
@@ -2590,16 +2590,16 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 2;
         },
         0xff => {
-            //RST 7 (CALL 0x38)
+            // RST 7 (CALL 0x38)
             var jmp_to: u16 = 0x38;
             cpu.pc +%= 1;
             cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
             cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
-            //Decrement SP, jump
+            // Decrement SP, jump
             cpu.sp -%= 2;
             cpu.pc = jmp_to;
         },
-        //NOPS
+        // NOPS
         0xfd, 0xed, 0x08, 0x10, 0xdd, 0xd9, 0xcb, 0x38, 0x30, 0x28, 0x18 => {
             cpu.pc +%= 1;
         },
@@ -2633,7 +2633,7 @@ pub fn unimplementedOpcode(op: u8, cpu: *CPU) void {
     std.os.exit(1);
 }
 
-//pc should only have access to 16 bits
+// pc should only have access to 16 bits
 pub fn disassemble(buf: []u8, pc: u16) u8 {
     var op = buf[pc];
     var b1: u8 = 0;
@@ -3634,7 +3634,7 @@ pub fn comp_uints(context: void, a: u32, b: u32) bool {
     return std.sort.asc(u32)(context, a, b);
 }
 
-//Need to fix to return proper min available value.
+// Need to fix to return proper min available value.
 pub fn getMinAvailableId(pCpu: *CPU) u32 {
     var id_list = std.ArrayList(u32).init(globAlloc);
     for (pCpu.bps.items) |bp| {
@@ -3647,7 +3647,7 @@ pub fn getMinAvailableId(pCpu: *CPU) u32 {
         return 0;
     };
     std.sort.pdq(u32, id_slice, {}, comp_uints);
-    //Once sorted, look for smallest 'gap' (i.e 1, 2, 3,__ 6)
+    // Once sorted, look for smallest 'gap' (i.e 1, 2, 3,__ 6)
     for (id_slice, 0..) |id, i| {
         if (id == min_possible_id) {
             min_possible_id += 1;
@@ -3674,7 +3674,7 @@ pub fn initBreakpoint(pCpu: *CPU, addr: u16) !*Breakpoint {
 
 pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
     var addr: u16 = undefined;
-    //List breakpoints
+    // List breakpoints
     if (args.len == 1) {
         for (pCpu.bps.items) |bp| {
             _ = stdout.writer().print(colors.BLUE ++ "Id: {d}\n", .{bp.id}) catch {};
@@ -3691,7 +3691,7 @@ pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
         }
         return;
     }
-    //Break on addr
+    // Break on addr
     if (args.len == 2) {
         addr = std.fmt.parseInt(u16, args[1], 0) catch {
             _ = stdout.writer().print(colors.RED ++ "Invalid address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
@@ -3707,7 +3707,7 @@ pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
         };
         _ = stdout.writer().print(colors.GREEN ++ "Breakpoint {d} added" ++ colors.DEFAULT ++ "\n", .{new_bp.id}) catch {};
     }
-    //Disable/enable bp
+    // Disable/enable bp
     else if (args.len == 3) {
         var sub_cmd: []const u8 = args[1];
         var bp_id: u32 = std.fmt.parseInt(u32, args[2], 0) catch blk: {
@@ -3747,11 +3747,11 @@ pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
     }
 }
 
-//TODO - overhaul memdumpCmd and hexdump to account for length
-//and to print addresses next to dump
+// TODO - overhaul memdumpCmd and hexdump to account for length
+// and to print addresses next to dump
 //...perhaps a byte & word option would be nice too
-//Would be easy to write a hexdumpWord func and swap between the
-//two in memdumpCmd
+// Would be easy to write a hexdumpWord func and swap between the
+// two in memdumpCmd
 
 pub fn memdumpCmd(pCpu: *CPU, args: [][]const u8) void {
     var addr: u16 = undefined;
@@ -3774,7 +3774,7 @@ pub fn memdumpCmd(pCpu: *CPU, args: [][]const u8) void {
         _ = stdout.writer().print(colors.RED ++ "Address required" ++ colors.DEFAULT ++ "\n", .{}) catch {};
         return;
     }
-    //needed this for to avoid integer overflow...
+    // needed this for to avoid integer overflow...
     var len_as_u17: u17 = @as(u17, len);
     var addr_as_u17: u17 = @as(u17, addr);
     const checkLen: u17 = len_as_u17 + addr_as_u17;
@@ -3847,7 +3847,7 @@ pub fn disassembleWholeProg(progBuf: []u8) void {
         print("0x{x:0>2}: ", .{i});
         var opSize = disassemble(progBuf, i);
         print("\n", .{});
-        //opSize of zero means invalid op :/
+        // opSize of zero means invalid op :/
         if (opSize == 0) {
             break;
         }

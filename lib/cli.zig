@@ -83,7 +83,7 @@ pub fn writeCommandHistory() !void {
     }
 }
 
-///Open 'history.txt' file and populate the cmd_history global with the command history
+/// Open 'history.txt' file and populate the cmd_history global with the command history
 pub fn loadCmdHistory() !void {
     const cwd = std.fs.cwd();
     cmd_history = std.ArrayList([]const u8).init(globAlloc);
@@ -177,9 +177,9 @@ pub fn getUniqueCmds() []CmdStruct {
     };
 }
 
-///Iterate through global CmdStringHashMap, printing help options
-///Alternatively if args contain a command or list of commands, print
-///the relevant help options.
+/// Iterate through global CmdStringHashMap, printing help options
+/// Alternatively if args contain a command or list of commands, print
+/// the relevant help options.
 pub fn helpCmd(args: [][]const u8) void {
     var unique_cmds: []CmdStruct = getUniqueCmds();
     var all_keys = std.ArrayList(u8).init(globAlloc);
@@ -283,7 +283,7 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
     defer line.deinit();
     _ = try stdout_writer.write(prompt_str);
     while (true) {
-        std.time.sleep(10000); //slow down the reads...
+        std.time.sleep(10000); // slow down the reads...
         read_in = stdin_reader.readByte() catch 0;
         if (read_in == 0) {
             if (glob_broken.*) {
@@ -294,19 +294,19 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
             continue;
         }
         switch (read_in) {
-            //Backspace
+            // Backspace
             '\x7f' => {
                 if (line.items.len > 0) {
                     _ = line.pop();
                     _ = try stdout_writer.write("\x1b[D\x1b[K\x1b[D\x1b[K\x1b[D\x1b[K");
                 } else _ = try stdout_writer.write("\x1b[D\x1b[K\x1b[D\x1b[K");
             },
-            //Clear screen
+            // Clear screen
             '\x0c' => {
                 _ = try stdout_writer.print("\x1bc\r" ++ prompt_str ++ "{s}", .{line.items});
                 continue;
             },
-            //arrows!
+            // arrows!
             '\x1b' => {
                 _ = stdin_reader.readByte() catch 0;
                 read_in = stdin_reader.readByte() catch 0;
@@ -314,8 +314,8 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
                 const down: bool = false;
                 _ = switch (read_in) {
                     'A' => blk: {
-                        //up
-                        //Move cursor left 4 and clear line after
+                        // up
+                        // Move cursor left 4 and clear line after
                         _ = try stdout_writer.write("\x1b[1000D\x1b[0K");
                         line.clearAndFree();
                         _ = try line.appendSlice(getCmdFromHistory(up));
@@ -323,7 +323,7 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
                         break :blk line.items;
                     },
                     'B' => blk: {
-                        //down
+                        // down
                         _ = try stdout_writer.write("\x1b[1000D\x1b[0K");
                         line.clearAndFree();
                         _ = try line.appendSlice(getCmdFromHistory(down));
@@ -331,18 +331,18 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
                         break :blk line.items;
                     },
                     'C' => blk: {
-                        //right
+                        // right
                         _ = try stdout_writer.write("\x1b[4D\x1b[0K");
                         break :blk line.items;
                     },
                     'D' => blk: {
-                        //left
+                        // left
                         _ = try stdout_writer.write("\x1b[5D\x1b[0K");
                         break :blk line.items;
                     },
                     else => "\x00",
                 };
-                //try stdout.writer().print("\rarrow type: {s}\n> ", .{try line.toOwnedSlice()});
+                // try stdout.writer().print("\rarrow type: {s}\n> ", .{try line.toOwnedSlice()});
                 continue;
             },
             '\n' => {
@@ -357,11 +357,11 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
                 }
                 return try cmd_list.toOwnedSlice();
             },
-            //ASCII printable range...
+            // ASCII printable range...
             0x20...0x7e => {
                 try line.append(read_in);
             },
-            //EOT (Ctrl + D)
+            // EOT (Ctrl + D)
             0x04 => {
                 _ = try line.toOwnedSlice();
                 var cmd_list = std.ArrayList([]const u8).init(alloc);
@@ -382,8 +382,8 @@ pub fn promptWithArrows(alloc: std.mem.Allocator) ![][]const u8 {
     }
 }
 
-///Provide user input prompt.
-///Array of user inputs are returned
+/// Provide user input prompt.
+/// Array of user inputs are returned
 pub fn prompt(alloc: std.mem.Allocator) ![][]const u8 {
     _ = try stdout.writer().write("> ");
     var buf = try stdin.reader().readUntilDelimiterAlloc(alloc, '\n', std.math.maxInt(u32));

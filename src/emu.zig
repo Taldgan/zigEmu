@@ -108,13 +108,13 @@ fn quit(args: [][]const u8) void {
 }
 
 pub fn main() !void {
-    //Arena Allocator init & defer denit
+    // Arena Allocator init & defer denit
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const alloc = arena.allocator();
     defer arena.deinit();
     var broken: bool = false;
 
-    //Necessary to identify arrow inputs
+    // Necessary to identify arrow inputs
     icli.disableLineBuffering();
 
     var buf: [icpu.mem_size]u8 = undefined;
@@ -126,7 +126,7 @@ pub fn main() !void {
     var safe = [_][]const u8{"r"};
     var prevResponse: [][]const u8 = &safe;
 
-    //Initilialize callbacks, then create cli global hashmap containing commands
+    // Initilialize callbacks, then create cli global hashmap containing commands
     var cmd_list = try initCallbacks(alloc);
     icli.setGlobAlloc(alloc);
     icpu.setGlobAlloc(alloc);
@@ -138,7 +138,7 @@ pub fn main() !void {
         var response: [][]const u8 = icli.promptWithArrows(alloc) catch {
             continue;
         };
-        //Repeat prev command if only 'enter' is pressed...
+        // Repeat prev command if only 'enter' is pressed...
         if (std.mem.eql(u8, response[0], "")) {
             try icli.parseCommands(prevResponse, cpu, true);
         } else {
