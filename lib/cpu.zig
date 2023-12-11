@@ -1,11 +1,10 @@
-const colors = @import("colors.zig");
+const colors = @import("root").colors;
 const std = @import("std");
 const stdout = std.io.getStdOut();
 const print = std.debug.print;
 
 pub const mem_size = 0x10000;
 var globAlloc: std.mem.Allocator = undefined;
-
 
 // Times hit, addr, id?
 const Breakpoint = struct {
@@ -53,8 +52,7 @@ pub fn statusPrintCmd(pCpu: *CPU, args: [][]const u8) void {
     if (pCpu.status_print) {
         pCpu.status_print = false;
         _ = stdout.writer().write(colors.GREEN ++ "Print CPU Status on Step Disabled" ++ colors.DEFAULT ++ "\n") catch {};
-    }
-    else {
+    } else {
         pCpu.status_print = true;
         _ = stdout.writer().write(colors.GREEN ++ "Print CPU Status on Step Enabled" ++ colors.DEFAULT ++ "\n") catch {};
     }
@@ -65,8 +63,7 @@ pub fn cpmHookCmd(pCpu: *CPU, args: [][]const u8) void {
     if (pCpu.cpm_hook) {
         pCpu.cpm_hook = false;
         _ = stdout.writer().write(colors.GREEN ++ "CP/M OS Hook Disabled" ++ colors.DEFAULT ++ "\n") catch {};
-    }
-    else {
+    } else {
         pCpu.cpm_hook = true;
         _ = stdout.writer().write(colors.GREEN ++ "CP/M OS Hook Enabled" ++ colors.DEFAULT ++ "\n") catch {};
     }
@@ -106,8 +103,8 @@ pub fn loadCmd(pCpu: *CPU, args: [][]const u8) void {
     }
 
     //Copy bytes into cpu memory
-    for (&fileBuf) |byte, i| {
-        pCpu.memory[i+mapLoc] = byte;
+    for (&fileBuf, 0..) |byte, i| {
+        pCpu.memory[i + mapLoc] = byte;
         if (i >= bytesRead)
             break;
     }
@@ -121,8 +118,7 @@ pub fn loadCmd(pCpu: *CPU, args: [][]const u8) void {
 pub fn continueCmd(pCpu: *CPU, args: [][]const u8) void {
     _ = args;
     while (true) {
-        if(emulate(pCpu)) {
-
+        if (emulate(pCpu)) {
             break;
         }
     }
@@ -141,7 +137,7 @@ pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
         };
         var i: u32 = 0;
         while (i < steps) : (i += 1) {
-            if(emulate(pCpu)) {
+            if (emulate(pCpu)) {
                 break;
             }
         }
@@ -151,14 +147,13 @@ pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
 
         var disas_line: u16 = pCpu.pc - 10;
         var inst_len: u8 = 1;
-        while (disas_line < pCpu.pc+10) {
-            if(disas_line != pCpu.pc) {
+        while (disas_line < pCpu.pc + 10) {
+            if (disas_line != pCpu.pc) {
                 _ = stdout.writer().print("   ", .{}) catch {};
                 _ = stdout.writer().print("0x{x:0>2}: ", .{disas_line}) catch {};
                 inst_len = disassemble(pCpu.memory, disas_line);
                 _ = stdout.writer().write("\n") catch {};
-            }
-            else {
+            } else {
                 _ = stdout.writer().print("-> ", .{}) catch {};
                 _ = stdout.writer().print("0x{x:0>2}: ", .{disas_line}) catch {};
                 inst_len = disassemble(pCpu.memory, disas_line);
@@ -166,8 +161,7 @@ pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
             }
             disas_line += inst_len;
         }
-    }
-    else {
+    } else {
         stdout.writer().print("0x{x:0>2}: ", .{pCpu.pc}) catch {};
         _ = disassemble(pCpu.memory, pCpu.pc);
         _ = stdout.writer().write("\n") catch {};
@@ -289,7 +283,7 @@ pub fn parity(result: u16) u1 {
         i += 1;
     }
     //odd parity = '0', even parity = '1'
-    return @boolToInt(bit_count % 2 == 0);
+    return @intFromBool(bit_count % 2 == 0);
 }
 
 pub fn printCpuStatus(pCpu: *CPU) void {
@@ -308,7 +302,7 @@ pub fn printCpuStatus(pCpu: *CPU) void {
     print(" d: 0x{x:0>2}\n e: 0x{x:0>2} h: 0x{x:0>2} l: 0x{x:0>2}\n", .{ cpu.d, cpu.e, cpu.h, cpu.l });
     print(" pc: 0x{x:0>4} -> [", .{cpu.pc});
     _ = disassemble(cpu.memory, cpu.pc);
-    print("]\n bc: 0x{x:0>4} de: 0x{x:0>4} hl: 0x{x:0>4} -> [0x{x:0>2}]\n", .{ bc, de, hl, cpu.memory[hl]});
+    print("]\n bc: 0x{x:0>4} de: 0x{x:0>4} hl: 0x{x:0>4} -> [0x{x:0>2}]\n", .{ bc, de, hl, cpu.memory[hl] });
     print(" sp: 0x{x:0>4} -> [0x{x:0>2}{x:0>2}]\n", .{ cpu.sp, cpu.memory[cpu.sp + 1], cpu.memory[cpu.sp] });
     print(" z:{b} s:{b} p:{b} cy:{b} ac:{b}\n", .{ cpu.cc.z, cpu.cc.s, cpu.cc.p, cpu.cc.cy, cpu.cc.ac });
     if (pCpu.cpm_hook) {
@@ -353,8 +347,8 @@ pub fn emulate(cpu: *CPU) bool {
 
             bc +%= 1;
 
-            cpu.b = @truncate(u8, (bc >> 8));
-            cpu.c = @truncate(u8, bc);
+            cpu.b = @as(u8, @truncate((bc >> 8)));
+            cpu.c = @as(u8, @truncate(bc));
 
             cpu.pc +%= 1;
         },
@@ -362,22 +356,22 @@ pub fn emulate(cpu: *CPU) bool {
             //INR B (B = B + 1)
             var result: u16 = cpu.b;
             result +%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.b = @truncate(u8, result);
+            cpu.b = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x05 => {
             //DCR B (B = B - 1)
             var result: u16 = cpu.b;
             result -%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.b = @truncate(u8, result);
+            cpu.b = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x06 => {
@@ -391,7 +385,7 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u8 = (op1 & 0x80) >> 7;
             var result: u8 = (op1 << 1) | op2;
             cpu.a = result;
-            cpu.cc.cy = @boolToInt(op2 == 1);
+            cpu.cc.cy = @intFromBool(op2 == 1);
             cpu.pc +%= 1;
         },
         0x09 => {
@@ -405,9 +399,9 @@ pub fn emulate(cpu: *CPU) bool {
             hl +%= cpu.l;
 
             hl +%= bc;
-            cpu.cc.cy = @boolToInt(((hl & 0x10000) != 0));
-            cpu.h = @truncate(u8, hl >> 8);
-            cpu.l = @truncate(u8, hl);
+            cpu.cc.cy = @intFromBool(((hl & 0x10000) != 0));
+            cpu.h = @as(u8, @truncate(hl >> 8));
+            cpu.l = @as(u8, @truncate(hl));
             cpu.pc +%= 1;
         },
         0x0a => {
@@ -426,30 +420,30 @@ pub fn emulate(cpu: *CPU) bool {
             bc +%= cpu.c;
             bc -%= 1;
 
-            cpu.b = @truncate(u8, (bc >> 8));
-            cpu.c = @truncate(u8, bc);
+            cpu.b = @as(u8, @truncate((bc >> 8)));
+            cpu.c = @as(u8, @truncate(bc));
             cpu.pc +%= 1;
         },
         0x0c => {
             //INR C (C = C + 1)
             var result: u16 = cpu.c;
             result +%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.c = @truncate(u8, result);
+            cpu.c = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x0d => {
             //DCR C (C = C - 1)
             var result: u16 = cpu.c;
             result -%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.c = @truncate(u8, result);
+            cpu.c = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x0e => {
@@ -462,7 +456,7 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u8 = cpu.a;
             var result: u8 = (op1 & 1 << 7) | (op1 >> 1);
             cpu.a = result;
-            cpu.cc.cy = @boolToInt((op1 & 1) == 1);
+            cpu.cc.cy = @intFromBool((op1 & 1) == 1);
             cpu.pc +%= 1;
         },
         0x11 => {
@@ -487,8 +481,8 @@ pub fn emulate(cpu: *CPU) bool {
             de +%= cpu.e;
             de +%= 1;
 
-            cpu.d = @truncate(u8, (de >> 8));
-            cpu.e = @truncate(u8, de);
+            cpu.d = @as(u8, @truncate((de >> 8)));
+            cpu.e = @as(u8, @truncate(de));
 
             cpu.pc +%= 1;
         },
@@ -496,22 +490,22 @@ pub fn emulate(cpu: *CPU) bool {
             //INR D (D = D + 1)
             var result: u16 = cpu.d;
             result +%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.d = @truncate(u8, result);
+            cpu.d = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x15 => {
             //DCR D (D = D - 1)
             var result: u16 = cpu.d;
             result -%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.d = @truncate(u8, result);
+            cpu.d = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x16 => {
@@ -526,7 +520,7 @@ pub fn emulate(cpu: *CPU) bool {
             var bit7: u8 = (op1 & 0x80) >> 7;
             var result: u8 = (op1 << 1) | op2;
             cpu.a = result;
-            cpu.cc.cy = @boolToInt(bit7 == 1);
+            cpu.cc.cy = @intFromBool(bit7 == 1);
             cpu.pc +%= 1;
         },
         0x19 => {
@@ -540,9 +534,9 @@ pub fn emulate(cpu: *CPU) bool {
             hl +%= cpu.l;
 
             hl +%= de;
-            cpu.cc.cy = @boolToInt(((hl & 0x10000) != 0));
-            cpu.h = @truncate(u8, hl >> 8);
-            cpu.l = @truncate(u8, hl);
+            cpu.cc.cy = @intFromBool(((hl & 0x10000) != 0));
+            cpu.h = @as(u8, @truncate(hl >> 8));
+            cpu.l = @as(u8, @truncate(hl));
             cpu.pc +%= 1;
         },
         0x1a => {
@@ -561,30 +555,30 @@ pub fn emulate(cpu: *CPU) bool {
             de +%= cpu.e;
             de -%= 1;
 
-            cpu.d = @truncate(u8, (de >> 8));
-            cpu.e = @truncate(u8, de);
+            cpu.d = @as(u8, @truncate((de >> 8)));
+            cpu.e = @as(u8, @truncate(de));
             cpu.pc +%= 1;
         },
         0x1c => {
             //INR E (E = E + 1)
             var result: u16 = cpu.e;
             result +%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.e = @truncate(u8, result);
+            cpu.e = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x1d => {
             //DCR E (E = E - 1)
             var result: u16 = cpu.e;
             result -%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.e = @truncate(u8, result);
+            cpu.e = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x1e => {
@@ -598,7 +592,7 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u8 = @as(u8, cpu.cc.cy);
             var result: u8 = (op2 << 7) | (op1 >> 1);
             cpu.a = result;
-            cpu.cc.cy = @boolToInt((op1 & 1) == 1);
+            cpu.cc.cy = @intFromBool((op1 & 1) == 1);
             cpu.pc +%= 1;
         },
         0x20 => {
@@ -628,8 +622,8 @@ pub fn emulate(cpu: *CPU) bool {
 
             hl +%= 1;
 
-            cpu.h = @truncate(u8, (hl >> 8));
-            cpu.l = @truncate(u8, hl);
+            cpu.h = @as(u8, @truncate((hl >> 8)));
+            cpu.l = @as(u8, @truncate(hl));
 
             cpu.pc +%= 1;
         },
@@ -637,22 +631,22 @@ pub fn emulate(cpu: *CPU) bool {
             //INR H (H = H + 1)
             var result: u16 = cpu.h;
             result +%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.h = @truncate(u8, result);
+            cpu.h = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x25 => {
             //DCR H (H = H - 1)
             var result: u16 = cpu.h;
             result -%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.h = @truncate(u8, result);
+            cpu.h = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x26 => {
@@ -670,9 +664,9 @@ pub fn emulate(cpu: *CPU) bool {
             hl +%= cpu.l;
 
             hl = hl << 1;
-            cpu.cc.cy = @boolToInt(((hl & 0x10000) != 0));
-            cpu.h = @truncate(u8, hl >> 8);
-            cpu.l = @truncate(u8, hl);
+            cpu.cc.cy = @intFromBool(((hl & 0x10000) != 0));
+            cpu.h = @as(u8, @truncate(hl >> 8));
+            cpu.l = @as(u8, @truncate(hl));
             cpu.pc +%= 1;
         },
         0x2a => {
@@ -691,30 +685,30 @@ pub fn emulate(cpu: *CPU) bool {
             hl +%= cpu.l;
             hl -%= 1;
 
-            cpu.h = @truncate(u8, (hl >> 8));
-            cpu.l = @truncate(u8, hl);
+            cpu.h = @as(u8, @truncate((hl >> 8)));
+            cpu.l = @as(u8, @truncate(hl));
             cpu.pc +%= 1;
         },
         0x2c => {
             //INR L (L = L + 1)
             var result: u16 = cpu.l;
             result +%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.l = @truncate(u8, result);
+            cpu.l = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x2d => {
             //DCR L (L = L - 1)
             var result: u16 = cpu.l;
             result -%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.l = @truncate(u8, result);
+            cpu.l = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x2e => {
@@ -757,11 +751,11 @@ pub fn emulate(cpu: *CPU) bool {
 
             var result: u16 = cpu.memory[hl];
             result +%= 1;
-            cpu.memory[hl] = @truncate(u8, result);
+            cpu.memory[hl] = @as(u8, @truncate(result));
 
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -773,11 +767,11 @@ pub fn emulate(cpu: *CPU) bool {
 
             var result: u16 = cpu.memory[hl];
             result -%= 1;
-            cpu.memory[hl] = @truncate(u8, result);
+            cpu.memory[hl] = @as(u8, @truncate(result));
 
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -801,9 +795,9 @@ pub fn emulate(cpu: *CPU) bool {
             hl +%= cpu.l;
 
             hl +%= cpu.sp;
-            cpu.cc.cy = @boolToInt(((hl & 0x10000) != 0));
-            cpu.h = @truncate(u8, hl >> 8);
-            cpu.l = @truncate(u8, hl);
+            cpu.cc.cy = @intFromBool(((hl & 0x10000) != 0));
+            cpu.h = @as(u8, @truncate(hl >> 8));
+            cpu.l = @as(u8, @truncate(hl));
             cpu.pc +%= 1;
         },
         0x3a => {
@@ -824,22 +818,22 @@ pub fn emulate(cpu: *CPU) bool {
             //INR A (A = A + 1)
             var result: u16 = cpu.a;
             result +%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.a = @truncate(u8, result);
+            cpu.a = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x3d => {
             //DCR A (A = A + 1)
             var result: u16 = cpu.a;
             result -%= 1;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
-            cpu.a = @truncate(u8, result);
+            cpu.a = @as(u8, @truncate(result));
             cpu.pc +%= 1;
         },
         0x3e => {
@@ -1223,10 +1217,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 + op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1235,10 +1229,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 + op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1247,10 +1241,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 + op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1259,10 +1253,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var result: u16 = op1 + op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1271,10 +1265,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 + op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1283,10 +1277,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 + op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1300,10 +1294,10 @@ pub fn emulate(cpu: *CPU) bool {
 
             var op2: u16 = cpu.memory[hl];
             var result: u16 = op1 + op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1312,10 +1306,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 + op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1325,10 +1319,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.b;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 + op2 + op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1338,10 +1332,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.c;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 + op2 + op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1351,10 +1345,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.d;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 + op2 + op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1364,10 +1358,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.e;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 + op2 + op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1377,10 +1371,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.h;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 + op2 + op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1390,10 +1384,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.l;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 + op2 + op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1408,10 +1402,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.memory[hl];
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 + op2 + op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1421,10 +1415,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.a;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 + op2 + op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1433,10 +1427,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 - op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1445,10 +1439,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 - op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1457,10 +1451,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 - op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1469,10 +1463,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var result: u16 = op1 - op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1481,10 +1475,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 - op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1493,10 +1487,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 - op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1510,10 +1504,10 @@ pub fn emulate(cpu: *CPU) bool {
 
             var op2: u16 = cpu.memory[hl];
             var result: u16 = op1 - op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1522,10 +1516,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 - op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1535,10 +1529,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.b;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 -% op2 -% op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1548,10 +1542,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.c;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 -% op2 -% op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1561,10 +1555,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.d;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 -% op2 -% op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1574,10 +1568,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.e;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 -% op2 -% op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1587,10 +1581,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.h;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 -% op2 -% op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1600,10 +1594,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.l;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 -% op2 -% op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1618,10 +1612,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.memory[hl];
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 -% op2 -% op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1631,10 +1625,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op2: u16 = cpu.a;
             var op3: u16 = cpu.cc.cy;
             var result: u16 = op1 -% op2 -% op3;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1643,10 +1637,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 & op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1655,10 +1649,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 & op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1667,10 +1661,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 & op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1679,10 +1673,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var result: u16 = op1 & op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1691,10 +1685,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 & op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1703,10 +1697,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 & op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1720,10 +1714,10 @@ pub fn emulate(cpu: *CPU) bool {
 
             var op2: u16 = cpu.memory[hl];
             var result: u16 = op1 & op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1732,10 +1726,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 & op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1744,10 +1738,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 ^ op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1756,10 +1750,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 ^ op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1768,10 +1762,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 ^ op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1780,10 +1774,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var result: u16 = op1 ^ op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1792,10 +1786,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 ^ op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1804,10 +1798,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 ^ op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1820,10 +1814,10 @@ pub fn emulate(cpu: *CPU) bool {
 
             var op2: u16 = cpu.memory[hl];
             var result: u16 = op1 ^ op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1832,10 +1826,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 ^ op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1844,10 +1838,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 | op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1856,10 +1850,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 | op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1868,10 +1862,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 | op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1880,10 +1874,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.e;
             var result: u16 = op1 | op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1892,10 +1886,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 | op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1904,10 +1898,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 | op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1920,10 +1914,10 @@ pub fn emulate(cpu: *CPU) bool {
 
             var op2: u16 = cpu.memory[hl];
             var result: u16 = op1 | op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1932,10 +1926,10 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 | op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1944,9 +1938,9 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 - op2;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(op1 < op2);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1955,9 +1949,9 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.b;
             var result: u16 = op1 - op2;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(op1 < op2);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1966,9 +1960,9 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.c;
             var result: u16 = op1 - op2;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(op1 < op2);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1977,9 +1971,9 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.d;
             var result: u16 = op1 - op2;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(op1 < op2);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1988,9 +1982,9 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.h;
             var result: u16 = op1 - op2;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(op1 < op2);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -1999,9 +1993,9 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.l;
             var result: u16 = op1 - op2;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(op1 < op2);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -2015,9 +2009,9 @@ pub fn emulate(cpu: *CPU) bool {
 
             var op2: u16 = cpu.memory[hl];
             var result: u16 = op1 - op2;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(op1 < op2);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -2026,9 +2020,9 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = cpu.a;
             var result: u16 = op1 - op2;
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(op1 < op2);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(op1 < op2);
             cpu.cc.p = parity(result);
             cpu.pc +%= 1;
         },
@@ -2080,8 +2074,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
             if (cpu.cc.z == 0) {
                 //Write ret addr
-                cpu.memory[cpu.sp - 2] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp - 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
+                cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
                 //Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
@@ -2144,8 +2138,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
             if (cpu.cc.z == 1) {
                 //Write ret addr
-                cpu.memory[cpu.sp - 2] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp - 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
+                cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
                 //Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
@@ -2163,17 +2157,16 @@ pub fn emulate(cpu: *CPU) bool {
                 de = de << 8;
                 de +%= cpu.e;
                 var i: u16 = de;
-                while(cpu.memory[i] != '$' and i < mem_size) {
+                while (cpu.memory[i] != '$' and i < mem_size) {
                     _ = stdout.writer().print("{c}", .{cpu.memory[i]}) catch {};
                     i +%= 1;
                 }
                 cpu.pc +%= 3;
-            }
-            else {
+            } else {
                 //Write ret addr
                 cpu.pc +%= 3;
-                cpu.memory[cpu.sp -% 2] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp -% 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp -% 2] = @as(u8, @truncate(cpu.pc));
+                cpu.memory[cpu.sp -% 1] = @as(u8, @truncate((cpu.pc >> 8)));
                 //Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
@@ -2229,8 +2222,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
             if (cpu.cc.cy == 0) {
                 //Write ret addr
-                cpu.memory[cpu.sp - 2] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp - 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
+                cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
                 //Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
@@ -2286,8 +2279,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
             if (cpu.cc.cy == 1) {
                 //Write ret addr
-                cpu.memory[cpu.sp - 2] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp - 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
+                cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
                 //Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
@@ -2353,8 +2346,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
             if (cpu.cc.p == 0) {
                 //Write ret addr
-                cpu.memory[cpu.sp - 2] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp - 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
+                cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
                 //Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
@@ -2372,9 +2365,9 @@ pub fn emulate(cpu: *CPU) bool {
             var op1: u16 = cpu.a;
             var op2: u16 = op[1];
             var result: u16 = op1 & op2;
-            cpu.a = @truncate(u8, result);
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
+            cpu.a = @as(u8, @truncate(result));
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
             //ANI clears carry bit
             cpu.cc.cy = 0;
             cpu.cc.p = parity(result);
@@ -2417,16 +2410,16 @@ pub fn emulate(cpu: *CPU) bool {
             var de: u16 = cpu.d;
             de = de << 8;
             de +%= cpu.e;
-            
+
             var hl: u16 = cpu.h;
             hl = hl << 8;
             hl +%= cpu.l;
 
-            cpu.d = @truncate(u8, hl >> 8);
-            cpu.e = @truncate(u8, hl);
+            cpu.d = @as(u8, @truncate(hl >> 8));
+            cpu.e = @as(u8, @truncate(hl));
 
-            cpu.h = @truncate(u8, de >> 8);
-            cpu.l = @truncate(u8, de);
+            cpu.h = @as(u8, @truncate(de >> 8));
+            cpu.l = @as(u8, @truncate(de));
 
             cpu.pc +%= 1;
         },
@@ -2438,8 +2431,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
             if (cpu.cc.p == 1) {
                 //Write ret addr
-                cpu.memory[cpu.sp - 2] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp - 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
+                cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
                 //Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
@@ -2468,11 +2461,11 @@ pub fn emulate(cpu: *CPU) bool {
         0xf1 => {
             //POP PSW (FLAGS = (SP), A = (SP +1), SP +%= 2)
             var flags: u8 = cpu.memory[cpu.sp];
-            cpu.cc.z = @boolToInt((flags & 1) == 1);
-            cpu.cc.s = @boolToInt((flags & 2) == 2);
-            cpu.cc.p = @boolToInt((flags & 4) == 4);
-            cpu.cc.cy = @boolToInt((flags & 8) == 8);
-            cpu.cc.ac = @boolToInt((flags & 16) == 16);
+            cpu.cc.z = @intFromBool((flags & 1) == 1);
+            cpu.cc.s = @intFromBool((flags & 2) == 2);
+            cpu.cc.p = @intFromBool((flags & 4) == 4);
+            cpu.cc.cy = @intFromBool((flags & 8) == 8);
+            cpu.cc.ac = @intFromBool((flags & 16) == 16);
 
             cpu.a = cpu.memory[cpu.sp + 1];
             cpu.sp +%= 2;
@@ -2503,8 +2496,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
             if (cpu.cc.s == 0) {
                 //Write ret addr
-                cpu.memory[cpu.sp - 2] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp - 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
+                cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
                 //Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
@@ -2579,8 +2572,8 @@ pub fn emulate(cpu: *CPU) bool {
             cpu.pc +%= 3;
             if (cpu.cc.s == 1) {
                 //Write ret addr
-                cpu.memory[cpu.sp - 2] = @truncate(u8, cpu.pc);
-                cpu.memory[cpu.sp - 1] = @truncate(u8, (cpu.pc >> 8));
+                cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
+                cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
                 //Decrement SP, jump
                 cpu.sp -%= 2;
                 cpu.pc = jmp_to;
@@ -2589,9 +2582,9 @@ pub fn emulate(cpu: *CPU) bool {
         0xfe => {
             //CPI D8 (A - D8)
             var result: u16 = cpu.a -% op[1];
-            cpu.cc.z = @boolToInt(result == 0);
-            cpu.cc.s = @boolToInt(result & 0x80 != 0);
-            cpu.cc.cy = @boolToInt(result > 0xff);
+            cpu.cc.z = @intFromBool(result == 0);
+            cpu.cc.s = @intFromBool(result & 0x80 != 0);
+            cpu.cc.cy = @intFromBool(result > 0xff);
             cpu.cc.p = parity(result);
             cpu.cc.ac = parity(result);
             cpu.pc +%= 2;
@@ -2600,8 +2593,8 @@ pub fn emulate(cpu: *CPU) bool {
             //RST 7 (CALL 0x38)
             var jmp_to: u16 = 0x38;
             cpu.pc +%= 1;
-            cpu.memory[cpu.sp - 2] = @truncate(u8, cpu.pc);
-            cpu.memory[cpu.sp - 1] = @truncate(u8, (cpu.pc >> 8));
+            cpu.memory[cpu.sp - 2] = @as(u8, @truncate(cpu.pc));
+            cpu.memory[cpu.sp - 1] = @as(u8, @truncate((cpu.pc >> 8)));
             //Decrement SP, jump
             cpu.sp -%= 2;
             cpu.pc = jmp_to;
@@ -2613,7 +2606,7 @@ pub fn emulate(cpu: *CPU) bool {
     }
 
     // Breakpoints
-    for (cpu.bps.items) | bp, i |{
+    for (cpu.bps.items, 0..) |bp, i| {
         if (bp.addr == cpu.pc) {
             if (bp.enabled) {
                 _ = stdout.writer().print(colors.GREEN ++ "Hit breakpoint {d}" ++ colors.DEFAULT ++ "\n", .{bp.id}) catch {};
@@ -3644,23 +3637,25 @@ pub fn comp_uints(context: void, a: u32, b: u32) bool {
 //Need to fix to return proper min available value.
 pub fn getMinAvailableId(pCpu: *CPU) u32 {
     var id_list = std.ArrayList(u32).init(globAlloc);
-    for (pCpu.bps.items) | bp | {
+    for (pCpu.bps.items) |bp| {
         id_list.append(bp.id) catch {
             return 0;
         };
     }
     var min_possible_id: u32 = 1;
-    var id_slice: []u32 = id_list.toOwnedSlice();
-    std.sort.sort(u32, id_slice, {}, comp_uints);
+    var id_slice: []u32 = id_list.toOwnedSlice() catch {
+        return 0;
+    };
+    std.sort.pdq(u32, id_slice, {}, comp_uints);
     //Once sorted, look for smallest 'gap' (i.e 1, 2, 3,__ 6)
-    for (id_slice) | id, i | {
+    for (id_slice, 0..) |id, i| {
         if (id == min_possible_id) {
             min_possible_id += 1;
         }
-        if(id_slice.len-1 == i) {
+        if (id_slice.len - 1 == i) {
             return min_possible_id;
         }
-        if(id + 1 != id_slice[i+1]) {
+        if (id + 1 != id_slice[i + 1]) {
             return min_possible_id;
         }
     }
@@ -3675,21 +3670,19 @@ pub fn initBreakpoint(pCpu: *CPU, addr: u16) !*Breakpoint {
     new_bp.enabled = true;
     new_bp.times_hit = 0;
     return new_bp;
-
 }
 
 pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
     var addr: u16 = undefined;
     //List breakpoints
     if (args.len == 1) {
-        for (pCpu.bps.items) | bp | {
+        for (pCpu.bps.items) |bp| {
             _ = stdout.writer().print(colors.BLUE ++ "Id: {d}\n", .{bp.id}) catch {};
-            _ = stdout.writer().print( "  Times Hit: {d}\n", .{bp.times_hit}) catch {};
+            _ = stdout.writer().print("  Times Hit: {d}\n", .{bp.times_hit}) catch {};
             _ = stdout.writer().print("  Address: 0x{x:0>4}" ++ colors.DEFAULT ++ "\n", .{bp.addr}) catch {};
             if (bp.enabled) {
                 _ = stdout.writer().print(colors.GREEN ++ "  Enabled" ++ colors.DEFAULT ++ "\n", .{}) catch {};
-            }
-            else {
+            } else {
                 _ = stdout.writer().print(colors.RED ++ "  Disabled" ++ colors.DEFAULT ++ "\n", .{}) catch {};
             }
         }
@@ -3713,7 +3706,7 @@ pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
             return;
         };
         _ = stdout.writer().print(colors.GREEN ++ "Breakpoint {d} added" ++ colors.DEFAULT ++ "\n", .{new_bp.id}) catch {};
-    } 
+    }
     //Disable/enable bp
     else if (args.len == 3) {
         var sub_cmd: []const u8 = args[1];
@@ -3722,7 +3715,7 @@ pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
             break :blk 0;
         };
         if (std.mem.eql(u8, sub_cmd, "d")) {
-            for (pCpu.bps.items) | bp, i | {
+            for (pCpu.bps.items, 0..) |bp, i| {
                 if (bp.id == bp_id) {
                     var my_bp = &pCpu.bps.items[i];
                     my_bp.enabled = false;
@@ -3731,9 +3724,8 @@ pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
                 }
             }
             _ = stdout.writer().print(colors.RED ++ "No breakpoint matching id {s}" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
-        }
-        else if (std.mem.eql(u8, sub_cmd, "e")) {
-            for (pCpu.bps.items) | bp, i | {
+        } else if (std.mem.eql(u8, sub_cmd, "e")) {
+            for (pCpu.bps.items, 0..) |bp, i| {
                 if (bp.id == bp_id) {
                     var my_bp = &pCpu.bps.items[i];
                     my_bp.enabled = true;
@@ -3742,9 +3734,8 @@ pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
                 }
             }
             _ = stdout.writer().print(colors.RED ++ "No breakpoint matching id {s}" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
-        }
-        else if (std.mem.eql(u8, sub_cmd, "c")) {
-            for (pCpu.bps.items) | bp, i | {
+        } else if (std.mem.eql(u8, sub_cmd, "c")) {
+            for (pCpu.bps.items, 0..) |bp, i| {
                 if (bp.id == bp_id) {
                     _ = pCpu.bps.orderedRemove(i);
                     _ = stdout.writer().print(colors.GREEN ++ "Removed breakpoint {s}" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
@@ -3770,8 +3761,7 @@ pub fn memdumpCmd(pCpu: *CPU, args: [][]const u8) void {
             _ = stdout.writer().print(colors.RED ++ "Invalid address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
             break :blk 0;
         };
-    } 
-    else if (args.len >= 3) {
+    } else if (args.len >= 3) {
         addr = std.fmt.parseInt(u16, args[1], 0) catch blk: {
             _ = stdout.writer().print(colors.RED ++ "Invalid address: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[1]}) catch {};
             break :blk 0;
@@ -3780,8 +3770,7 @@ pub fn memdumpCmd(pCpu: *CPU, args: [][]const u8) void {
             _ = stdout.writer().print(colors.RED ++ "Invalid length: '{s}'" ++ colors.DEFAULT ++ "\n", .{args[2]}) catch {};
             break :blk 0;
         };
-    }
-    else {
+    } else {
         _ = stdout.writer().print(colors.RED ++ "Address required" ++ colors.DEFAULT ++ "\n", .{}) catch {};
         return;
     }
@@ -3789,7 +3778,7 @@ pub fn memdumpCmd(pCpu: *CPU, args: [][]const u8) void {
     var len_as_u17: u17 = @as(u17, len);
     var addr_as_u17: u17 = @as(u17, addr);
     const checkLen: u17 = len_as_u17 + addr_as_u17;
-    if (checkLen >= pCpu.memory.len){
+    if (checkLen >= pCpu.memory.len) {
         _ = stdout.writer().print(colors.RED ++ "Length: '{d}' exceeds memory boundary" ++ colors.DEFAULT ++ "\n", .{len}) catch {};
         return;
     }
@@ -3808,15 +3797,15 @@ pub fn hexdump(buf: []u8, pc: u16, amount: u16) void {
     var locPc: u16 = pc;
     var writer = stdout.writer();
     var i: u16 = 0;
-    var fillspace = 8 - (amount % 8); 
+    var fillspace = 8 - (amount % 8);
 
-    while(amount >= 8 and i < num_rows) {
+    while (amount >= 8 and i < num_rows) {
         _ = writer.print("0x{x:0>4} | ", .{locPc}) catch {};
-        for(buf[locPc .. locPc+8]) |val| {
+        for (buf[locPc .. locPc + 8]) |val| {
             _ = writer.print("{x:0>2} ", .{val}) catch {};
         }
         _ = writer.write("| ") catch {};
-        for(buf[locPc .. locPc+8]) |val| {
+        for (buf[locPc .. locPc + 8]) |val| {
             _ = writer.print("{c} ", .{isPrintable(val)}) catch {};
         }
         _ = writer.write("|\n") catch {};
@@ -3825,25 +3814,25 @@ pub fn hexdump(buf: []u8, pc: u16, amount: u16) void {
     }
     if (fillspace == 8)
         fillspace = 0;
-    if (fillspace > 0){
+    if (fillspace > 0) {
         _ = writer.print("0x{x:0>4} | ", .{locPc}) catch {};
-        for(buf[locPc .. locPc+amount-(locPc-pc)]) |val| {
+        for (buf[locPc .. locPc + amount - (locPc - pc)]) |val| {
             _ = writer.print("{x:0>2} ", .{val}) catch {};
         }
-        if (fillspace > 0){
+        if (fillspace > 0) {
             i = 0;
-            while(i < fillspace){
+            while (i < fillspace) {
                 _ = writer.write("   ") catch {};
                 i += 1;
             }
         }
         _ = writer.write("| ") catch {};
-        for(buf[locPc .. locPc+amount-(locPc-pc)]) |val| {
+        for (buf[locPc .. locPc + amount - (locPc - pc)]) |val| {
             _ = writer.print("{c} ", .{isPrintable(val)}) catch {};
         }
-        if (fillspace > 0){
+        if (fillspace > 0) {
             i = 0;
-            while(i < fillspace){
+            while (i < fillspace) {
                 _ = writer.write("  ") catch {};
                 i += 1;
             }

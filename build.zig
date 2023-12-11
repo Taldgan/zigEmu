@@ -9,17 +9,28 @@ pub fn build(b: *std.build.Builder) void {
 
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
+    const optimize = b.standardOptimizeOption(.{});
 
-    const exe = b.addExecutable("zigEmu", "src/emu.zig");
-    exe.addPackagePath("cpu", "lib/cpu.zig");
-    exe.addPackagePath("cli", "lib/cli.zig");
+    const colorsModule = b.addModule("colors", .{ .source_file = .{ .path = "lib/colors.zig" } });
+
+    const cpuModule = b.addModule("cpu", .{ .source_file = .{ .path = "lib/cpu.zig" } });
+
+    const cliModule = b.addModule("cli", .{ .source_file = .{ .path = "lib/cli.zig" } });
+
+    const exe = b.addExecutable(.{
+        .name = "zigEmu",
+        .root_source_file = .{ .path = "src/emu.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.addModule("colors", colorsModule);
+    exe.addModule("cli", cliModule);
+    exe.addModule("cpu", cpuModule);
     exe.linkLibC();
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.install();
 
-    const run_cmd = exe.run();
+    b.installArtifact(exe);
+
+    const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
         run_cmd.addArgs(args);
@@ -27,20 +38,4 @@ pub fn build(b: *std.build.Builder) void {
 
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
-
-    const emuDocs = b.addExecutable("zigEmu", "src/emu.zig");
-    emuDocs.addPackagePath("cpu", "lib/cpu.zig");
-    emuDocs.addPackagePath("cli", "lib/cli.zig");
-    emuDocs.setBuildMode(mode);
-    emuDocs.emit_docs = .emit;
-
-    const docs_step = b.step("docs", "Generate documentation");
-    docs_step.dependOn(&emuDocs.step);
-
-    const exe_tests = b.addTest("src/emu.zig");
-    exe_tests.setTarget(target);
-    exe_tests.setBuildMode(mode);
-
-    const test_step = b.step("test", "Run unit tests");
-    test_step.dependOn(&exe_tests.step);
 }
