@@ -145,7 +145,15 @@ pub fn stepCmd(pCpu: *CPU, args: [][]const u8) void {
     if (pCpu.status_print) {
         printCpuStatus(pCpu);
 
-        var disas_line: u16 = pCpu.pc - 10;
+        var disas_line: u16 = undefined;
+        var overflow_tuple = @subWithOverflow(pCpu.pc, 10);
+        // If overflow, only print from pCpu.pc on
+        if (overflow_tuple[1] == 0) {
+            disas_line = overflow_tuple[0];
+        } else {
+            disas_line = pCpu.pc;
+        }
+
         var inst_len: u8 = 1;
         while (disas_line < pCpu.pc + 10) {
             if (disas_line != pCpu.pc) {
@@ -3672,6 +3680,29 @@ pub fn initBreakpoint(pCpu: *CPU, addr: u16) !*Breakpoint {
     return new_bp;
 }
 
+pub fn backtraceCmd(pCpu: *CPU, args: [][]const u8) void {
+    // Check stack for addresses where addr - 3 == a call
+    if (args.len == 1) {
+        var curr_sp: u16 = pCpu.sp;
+
+        var stack_val: u16 = pCpu.memory[curr_sp + 1];
+        stack_val = stack_val << 8;
+        stack_val += pCpu.memory[curr_sp];
+
+        while (curr_sp != 0) {
+            var inst: u8 = pCpu.memory[stack_val -% 3];
+            if (inst == 0xcd) {
+                _ = disassemble(pCpu.memory, stack_val -% 3);
+                _ = stdout.writer().write("\n") catch {};
+            }
+            curr_sp +%= 2;
+            stack_val = pCpu.memory[curr_sp];
+        }
+    }
+
+    return;
+}
+
 pub fn breakCmd(pCpu: *CPU, args: [][]const u8) void {
     var addr: u16 = undefined;
     // List breakpoints
@@ -3814,6 +3845,10 @@ pub fn hexdump(buf: []u8, pc: u16, amount: u16) void {
     }
     if (fillspace == 8)
         fillspace = 0;
+    // Overflow, don't do hexdump
+    if (@addWithOverflow(locPc, amount)[1] == 1) {
+        return;
+    }
     if (fillspace > 0) {
         _ = writer.print("0x{x:0>4} | ", .{locPc}) catch {};
         for (buf[locPc .. locPc + amount - (locPc - pc)]) |val| {

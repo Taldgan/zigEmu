@@ -97,6 +97,14 @@ fn initCallbacks(alloc: std.mem.Allocator) ![]icli.CmdStruct {
         .desc = "toggle print cpu status after step",
     }, .callback = icli.Callback{ .with_cpu = &icpu.statusPrintCmd } });
 
+    try key_list.append("bt");
+    try key_list.append("backtrace");
+    try cmd_list.append(icli.CmdStruct{ .keys = try key_list.toOwnedSlice(), .help_msg = icli.HelpMsg{
+        .cmd = "backtrace",
+        .args = "",
+        .desc = "print a stack backtrace",
+    }, .callback = icli.Callback{ .with_cpu = &icpu.backtraceCmd } });
+
     return cmd_list.toOwnedSlice();
 }
 
