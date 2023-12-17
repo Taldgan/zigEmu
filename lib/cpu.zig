@@ -3528,7 +3528,7 @@ pub fn disassemble(buf: []u8, pc: u16) u8 {
             return 1;
         },
         0xe6 => {
-            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   ANI  0x{x:0>2}", .{ op, b1, b1 });
+            print(colors.BLUE ++ "{x:0>2}{x:0>2}" ++ colors.DEFAULT ++ "   ANI 0x{x:0>2}", .{ op, b1, b1 });
             return 2;
         },
         0xe7 => {

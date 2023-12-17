@@ -274,3 +274,61 @@ According to emulator101.com:
   printed from the offset held in 'de' until the sentinel '$'
 - I think for now I should just hook this by implementing a CP/M OS flag in the call
   opcode or something that executes this routine
+
+
+# Breakpoints for debugging (& dump)
+```
+zig@emu$
+Hit breakpoint 1
+ a: 0x01 b: 0x00 c: 0x01 d: 0x0d
+ e: 0x50 h: 0x01 l: 0x72
+ pc: 0x0afc -> [7e     MOV A,M]
+ bc: 0x0001 de: 0x0d50 hl: 0x0172 -> [0x00]
+ sp: 0xfffa -> [0x016f]
+ z:0 s:0 p:0 cy:0 ac:1
+ CP/M Hook On
+ Step Status Print On
+
+zig@emu$
+Hit breakpoint 7
+ a: 0x00 b: 0x00 c: 0x00 d: 0x0d
+ e: 0x51 h: 0x01 l: 0x73
+ pc: 0x0b06 -> [110301 LXI D, 0x0103]
+ bc: 0x0000 de: 0x0d51 hl: 0x0173 -> [0xa5]
+ sp: 0xfffa -> [0x016f]
+ z:1 s:0 p:1 cy:0 ac:1
+ CP/M Hook On
+ Step Status Print On
+
+zig@emu$
+dad <b,d,h,sp>................8080 instruction exerciser
+Hit breakpoint 1
+ a: 0x40 b: 0x00 c: 0x04 d: 0x0d
+ e: 0x4d h: 0x01 l: 0x6f
+ pc: 0x0afc -> [7e     MOV A,M]
+ bc: 0x0004 de: 0x0d4d hl: 0x016f -> [0x09]
+ sp: 0xfffa -> [0x016f]
+ z:1 s:0 p:1 cy:0 ac:1
+ CP/M Hook On
+ Step Status Print On
+
+zig@emu$ b
+Id: 7
+  Times Hit: 3
+  Address: 0x0b06
+  Enabled
+Id: 1
+  Times Hit: 9
+  Address: 0x0afc
+  Enabled
+zig@emu$ disable 1
+Invalid command 'disable'
+zig@emu$ b d 1
+Disabled breakpoint 1
+zig@emu$
+```
+
+## Seems like the ideal point is 0xb06? to start? 'dad' print comes after
+0xb1b? - dad print right after
+0xe8c
+0xd96 - BREAKING RET
